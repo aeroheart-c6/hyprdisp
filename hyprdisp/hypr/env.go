@@ -34,3 +34,51 @@ func getRuntimePath() (string, error) {
 	return path.Join(value, "hypr"), nil
 
 }
+
+func getEventsSocketPath() (string, error) {
+	var (
+		runtimeDir string
+		instanceID string
+		err        error
+	)
+
+	runtimeDir, err = getRuntimePath()
+	if err != nil {
+		return "", nil
+	}
+
+	instanceID, err = getInstanceID()
+	if err != nil {
+		return "", nil
+	}
+
+	return path.Join(
+		runtimeDir,
+		instanceID,
+		".socket2.sock",
+	), nil
+}
+
+func getCommandsSocketPath() (string, error) {
+	var (
+		runtimeDir string
+		instanceID string
+		err        error
+	)
+
+	runtimeDir, err = getRuntimePath()
+	if err != nil {
+		return "", nil
+	}
+
+	instanceID, err = getInstanceID()
+	if err != nil {
+		return "", nil
+	}
+
+	return path.Join(
+		runtimeDir,
+		instanceID,
+		".socket.sock",
+	), nil
+}
