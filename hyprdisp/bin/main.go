@@ -1,8 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"strings"
+	"context"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"aeroheart.io/hyprdisp/hypr"
+	"aeroheart.io/hyprdisp/profiles"
+	"aeroheart.io/hyprdisp/sys"
 )
 
 /*
@@ -25,40 +32,82 @@ read data: {name:monitoraddedv2 data:1,DP-2,Beihai Century Joint Innovation Tech
 */
 
 func main() {
-	// var (
-	// 	// ctx     context.Context = context.Background()
-	// 	signals chan os.Signal = make(chan os.Signal, 1)
-	// 	// hyprCtx context.Context
-	// 	hyprCFn context.CancelFunc
-	// 	// err     error
-	// )
+	var (
+		ctx    context.Context
+		err    error
+		logger *log.Logger
+	)
 
-	// hyprCtx, hyprCFn = context.WithCancel(ctx)
-	// err = hypr.Listen(hyprCtx)
-	// if err != nil {
-	// 	fmt.Printf("error encountered: %v\n", err)
-	// 	os.Exit(1)
-	// }
+	ctx = setup()
+
+	err = exec(ctx)
+	if err != nil {
+		logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		logger.Printf("encountered an error: %v", err)
+	}
+}
+
+func setup() context.Context {
+	var ctx context.Context
+
+	ctx = context.Background()
+	ctx = setupLogger(ctx)
+	return ctx
+}
+
+func setupLogger(ctx context.Context) context.Context {
+	var logger *log.Logger = log.Default()
+
+	return context.WithValue(ctx, sys.ContextKeyLogger, logger)
+}
+
+func exec(ctx context.Context) error {
+	var (
+		hyprCtx          context.Context
+		hyprCancelFn     context.CancelFunc
+		profilesCtx      context.Context
+		profilesCancelFn context.CancelFunc
+		err              error
+	)
+
+	var (
+		hyprEvents chan hypr.Event
+		hyprErrs   chan error
+		profErrs   chan error = make(chan error, 1)
+	)
+
+	hyprCtx, hyprCancelFn = context.WithCancel(ctx)
+	defer hyprCancelFn()
+
+	profilesCtx, profilesCancelFn = context.WithCancel(ctx)
+	defer profilesCancelFn()
+
+	hyprEvents, hyprErrs, err = hypr.StreamEvents(hyprCtx)
+	if err != nil {
+		return err
+	}
+
+	profiles.Init(profilesCtx)
+	go profiles.ListenEvents(profilesCtx, profErrs, hyprEvents)
+	go profiles.ListenTimer(profilesCtx, profErrs)
 
 	// Wait for SIGTERM / SIGINT
-	// signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+	var signals chan os.Signal
 
-	// for range signals {
-	// 	hyprCFn()
-	// 	close(signals)
-	// }
+	signals = make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+	defer close(signals)
 
-	paragraph := "" +
-		"this is sparta\n" +
-		"this is mondstadt\n" +
-		"this is liyue\n" +
-		"this is"
-
-	fmt.Println(paragraph)
-
-	lines := strings.Split(paragraph, "\n")
-
-	if len(lines[len(lines)-1]) == 0 {
-		fmt.Println("we ended with a new line!")
+	select {
+	case <-signals:
+		hyprCancelFn()
+		profilesCancelFn()
+	case err = <-hyprErrs:
+		profilesCancelFn()
+	case err = <-profErrs:
+		hyprCancelFn()
+		profilesCancelFn()
 	}
+
+	return err
 }

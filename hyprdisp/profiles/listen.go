@@ -2,17 +2,21 @@ package profiles
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"time"
 
 	"aeroheart.io/hyprdisp/hypr"
+	"aeroheart.io/hyprdisp/sys"
 )
+
+type state string
 
 // TODO it's actually just 2 - 3 seconds wait
 const triggerDuration time.Duration = 5 * time.Second
 
 var (
 	timer        *time.Timer
+	currentState state
 )
 
 func Init(ctx context.Context) {
@@ -24,11 +28,11 @@ func ListenEvents(ctx context.Context, errs chan error, events chan hypr.Event) 
 
 	for event := range events {
 		if event.Name != hypr.EventNameMonitorAdded && event.Name != hypr.EventNameMonitorRemoved {
-			fmt.Printf("Got irrelevant event: %v\n", event)
+			logger.Printf("Got irrelevant event: %v\n", event)
 			continue
 		}
 
-		fmt.Printf("Got monitor event: %v\n", event)
+		logger.Printf("Got monitor event: %v\n", event)
 		timer.Reset(triggerDuration)
 	}
 }
@@ -37,6 +41,7 @@ func ListenTimer(ctx context.Context, errs chan error) {
 	var logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 
 	for moment := range timer.C {
+		logger.Printf("whoopps I just triggered! at %v\n", moment.Format(time.RFC3339))
 
 		triggerConfigUpdates()
 	}
