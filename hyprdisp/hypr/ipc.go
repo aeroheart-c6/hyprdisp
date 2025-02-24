@@ -16,7 +16,7 @@ type Event struct {
 	Data []string
 }
 
-func StreamEvents(ctx context.Context, events chan Event, errs chan error) error {
+func StreamEvents(ctx context.Context) (chan Event, chan error, error) {
 	var (
 		socketPath string
 		socketConn net.Conn
@@ -25,13 +25,18 @@ func StreamEvents(ctx context.Context, events chan Event, errs chan error) error
 
 	socketPath, err = getEventsSocketPath()
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	socketConn, err = net.Dial("unix", socketPath)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
+
+	var (
+		events chan Event = make(chan Event)
+		errs   chan error = make(chan error, 1)
+	)
 
 	go watchEvents(
 		ctx,
@@ -40,20 +45,22 @@ func StreamEvents(ctx context.Context, events chan Event, errs chan error) error
 		errs,
 	)
 
-	return nil
+	return events, errs, nil
 }
 
 func watchEvents(ctx context.Context, socketConn net.Conn, events chan Event, errs chan error) {
 	var (
-		bufferLength int    = 512
-		buffer       []byte = make([]byte, bufferLength)
-		dataSize     int    = 0
-		dataOverflow []byte
-		err          error
+		dataLength int    = 512
+		data       []byte = make([]byte, dataLength)
+		dataAvail  int    = 0
+		dataExcess []byte
+		err        error
 	)
 
 	defer func() {
 		socketConn.Close()
+		close(events)
+		close(errs)
 	}()
 
 	for {
@@ -63,20 +70,20 @@ func watchEvents(ctx context.Context, socketConn net.Conn, events chan Event, er
 		default:
 		}
 
-		dataSize, err = socketConn.Read(buffer)
+		dataAvail, err = socketConn.Read(data)
 		if err != nil {
 			errs <- err
 			return
 		}
 
-		if dataSize <= 0 {
+		if dataAvail <= 0 {
 			continue
 		}
 
-		buffer = append(dataOverflow, buffer[:dataSize]...)
+		data = append(dataExcess, data[:dataAvail]...)
 
 		var items []Event
-		items, dataOverflow = parseEvents(buffer)
+		items, dataExcess = parseEvents(data)
 
 		for _, event := range items {
 			events <- event

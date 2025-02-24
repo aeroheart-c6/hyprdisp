@@ -45,7 +45,15 @@ func (m *Monitor) set(field string, value string) error {
 	return nil
 }
 
-func (m Monitor) Empty() bool {
+func (m Monitor) String() string {
+	return fmt.Sprintf("[%s %s %s]",
+		m.ID,
+		m.Name,
+		m.Description,
+	)
+}
+
+func (m Monitor) IsZero() bool {
 	return m.Name == ""
 }
 
@@ -128,7 +136,7 @@ func parseMonitorsPayload(body string) ([]Monitor, error) {
 
 			if len(line) == 0 {
 				// Terminating line
-				if !monitor.Empty() {
+				if !monitor.IsZero() {
 					monitors = append(monitors, monitor)
 				}
 				break
