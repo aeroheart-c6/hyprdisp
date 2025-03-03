@@ -60,6 +60,7 @@ func setupLogger(ctx context.Context) context.Context {
 
 func exec(ctx context.Context) error {
 	var (
+		logger   *log.Logger         = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 		ctrl     profiles.Controller = profiles.ControllerImpl{}
 		monitors []hypr.Monitor
 		err      error
@@ -69,8 +70,13 @@ func exec(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return ctrl.Define(ctx, monitors)
 
+	if !ctrl.Detect(ctx, monitors) {
+		return ctrl.Define(ctx, monitors)
+	}
+
+	logger.Printf("Found configuration for monitors doing nothing")
+	return nil
 }
 
 // func exec(ctx context.Context) error {

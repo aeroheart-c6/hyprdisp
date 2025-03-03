@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
+	"path"
 
 	"crypto/sha3"
 
@@ -33,9 +33,15 @@ type workspaceConfig struct {
 	Decorate   bool   `toml:"decorate"`
 }
 
-func (c ControllerImpl) Detect(ctx context.Context, monitors []hypr.Monitor) error {
+func (c ControllerImpl) Detect(ctx context.Context, monitors []hypr.Monitor) bool {
+	var (
+		idName string = createID(monitors)
+		idPath string = path.Join(".", "var", fmt.Sprintf("%v.toml", idName))
+		err    error
+	)
 
-	return nil
+	_, err = os.Stat(idPath)
+	return err == nil
 }
 
 // Define will create a set of config files with default values based on `hyprctl monitors` output
@@ -63,10 +69,10 @@ func (c ControllerImpl) Define(ctx context.Context, monitors []hypr.Monitor) err
 		}
 	}
 
-	return writeConfig(ctx, displays)
+	return writeConfig(ctx, createID(monitors), displays)
 }
 
-func writeConfig(ctx context.Context, displays displayProfile) error {
+func writeConfig(ctx context.Context, id string, displays displayProfile) error {
 	var (
 		logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 		body   []byte
@@ -78,8 +84,11 @@ func writeConfig(ctx context.Context, displays displayProfile) error {
 		return err
 	}
 
-	var file *os.File
-	file, err = os.OpenFile("config.toml", os.O_CREATE|os.O_WRONLY, 0644)
+	var (
+		filePath string = path.Join(".", "var", fmt.Sprintf("%v.toml", id))
+		file     *os.File
+	)
+	file, err = os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
@@ -95,18 +104,12 @@ func writeConfig(ctx context.Context, displays displayProfile) error {
 	return nil
 }
 
-func createID(displays []hypr.Monitor) {
-	var identifiers []string = make([]string, 0, len(displays))
+func createID(monitors []hypr.Monitor) string {
+	var hash *sha3.SHA3 = sha3.New256()
 
-	for _, display := range displays {
-		identifiers = append(identifiers, display.String())
+	for _, monitor := range monitors {
+		hash.Write([]byte(monitor.String()))
 	}
 
-	var body string = strings.Join(identifiers, "|")
-	var hash [32]byte = sha3.Sum256([]byte(body))
-
-	fmt.Printf("Hash of the display combination: %v is %v\n",
-		body,
-		hex.EncodeToString(hash[:])[:6],
-	)
+	return hex.EncodeToString(hash.Sum(nil))[:10]
 }

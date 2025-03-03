@@ -7,7 +7,7 @@ import (
 )
 
 type Controller interface {
-	Detect(context.Context, []hypr.Monitor) error
+	Detect(context.Context, []hypr.Monitor) bool
 	Define(context.Context, []hypr.Monitor) error
 }
 
