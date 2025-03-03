@@ -1,4 +1,4 @@
-package hypr
+package hyprland
 
 import "testing"
 
