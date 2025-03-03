@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -18,9 +19,11 @@ type Monitor struct {
 	Make        string
 	Model       string
 	Serial      string
+	Enabled     bool
 }
 
 func (m *Monitor) set(field string, value string) error {
+
 	switch field {
 	case "id":
 		m.ID = value
@@ -38,6 +41,18 @@ func (m *Monitor) set(field string, value string) error {
 		m.Model = value
 	case "serial":
 		m.Serial = value
+	case "disabled":
+		var (
+			disabled bool
+			err      error
+		)
+
+		disabled, err = strconv.ParseBool(strings.ToLower(value))
+		if err != nil {
+			return err
+		}
+
+		m.Enabled = !disabled
 	default:
 		return fmt.Errorf("unsupported field: %v with value %v", field, value)
 	}
@@ -57,7 +72,7 @@ func (m Monitor) IsZero() bool {
 	return m.Name == ""
 }
 
-func GetMonitors() {
+func GetMonitors() ([]Monitor, error) {
 	var (
 		socketPath string
 		socketConn net.Conn
@@ -66,12 +81,12 @@ func GetMonitors() {
 
 	socketPath, err = getCommandsSocketPath()
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	socketConn, err = net.Dial("unix", socketPath)
 	if err != nil {
-		return
+		return nil, err
 	}
 	defer func() {
 		socketConn.Close()
@@ -101,7 +116,7 @@ func GetMonitors() {
 		}
 	}
 
-	fmt.Printf("MONITORS\n%v\n", data.String())
+	return parseMonitorsPayload(data.String())
 }
 
 var (

@@ -60,4 +60,7 @@ func Test_parseMonitorsPayload(t *testing.T) {
 	if monitor.Serial != "" {
 		t.Fatalf("monitor 0 has invalid description")
 	}
+	if monitor.Enabled != true {
+		t.Fatalf("monitor 0 has invalid enabled")
+	}
 }
