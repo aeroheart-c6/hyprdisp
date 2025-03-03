@@ -10,42 +10,24 @@ import (
 
 	"crypto/sha3"
 
-	"aeroheart.io/hyprdisp/hypr"
+	"aeroheart.io/hyprdisp/hyprland"
 	"aeroheart.io/hyprdisp/sys"
 	"github.com/pelletier/go-toml/v2"
 )
 
-type displayProfile map[string]displayConfig
-
-type displayConfig struct {
-	ID         string            `toml:"id"`
-	Main       bool              `toml:"main"`
-	Scale      string            `toml:"scale"`
-	Resolution string            `toml:"resolution"`
-	Frequency  string            `toml:"frequency"`
-	Workspaces []workspaceConfig `toml:"workspaces"`
-}
-
-type workspaceConfig struct {
-	ID         string `toml:"id"`
-	Default    bool   `toml:"default"`
-	Persistent bool   `toml:"persistent"`
-	Decorate   bool   `toml:"decorate"`
-}
-
-func (c ControllerImpl) Detect(ctx context.Context, monitors []hypr.Monitor) bool {
+func (c ControllerImpl) Detect(ctx context.Context, monitors []hyprland.Monitor) bool {
 	var (
-		idName string = createID(monitors)
-		idPath string = path.Join(".", "var", fmt.Sprintf("%v.toml", idName))
-		err    error
+		configID   string = getDisplaysConfigID(monitors)
+		configPath string = getDisplaysConfigPath(ctx, configID)
+		err        error
 	)
 
-	_, err = os.Stat(idPath)
+	_, err = os.Stat(configPath)
 	return err == nil
 }
 
 // Define will create a set of config files with default values based on `hyprctl monitors` output
-func (c ControllerImpl) Define(ctx context.Context, monitors []hypr.Monitor) error {
+func (c ControllerImpl) Define(ctx context.Context, monitors []hyprland.Monitor) error {
 	var logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 
 	var displays displayProfile = make(displayProfile, len(monitors))
@@ -69,10 +51,10 @@ func (c ControllerImpl) Define(ctx context.Context, monitors []hypr.Monitor) err
 		}
 	}
 
-	return writeConfig(ctx, createID(monitors), displays)
+	return saveDisplaysConfig(ctx, getDisplaysConfigID(monitors), displays)
 }
 
-func writeConfig(ctx context.Context, id string, displays displayProfile) error {
+func saveDisplaysConfig(ctx context.Context, id string, displays displayProfile) error {
 	var (
 		logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 		body   []byte
@@ -85,7 +67,7 @@ func writeConfig(ctx context.Context, id string, displays displayProfile) error 
 	}
 
 	var (
-		filePath string = path.Join(".", "var", fmt.Sprintf("%v.toml", id))
+		filePath string = getDisplaysConfigPath(ctx, id)
 		file     *os.File
 	)
 	file, err = os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
@@ -104,7 +86,32 @@ func writeConfig(ctx context.Context, id string, displays displayProfile) error 
 	return nil
 }
 
-func createID(monitors []hypr.Monitor) string {
+func loadDisplaysConfig(ctx context.Context, id string) (displayProfile, error) {
+	var (
+		filePath string = getDisplaysConfigPath(ctx, id)
+		data     []byte
+		err      error
+	)
+
+	data, err = os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var displays displayProfile
+	err = toml.Unmarshal(data, &displays)
+	if err != nil {
+		return nil, err
+	}
+
+	return displays, nil
+}
+
+func getDisplaysConfigPath(ctx context.Context, id string) string {
+	return path.Join(".", "var", fmt.Sprintf("%v.toml", id))
+}
+
+func getDisplaysConfigID(monitors []hyprland.Monitor) string {
 	var hash *sha3.SHA3 = sha3.New256()
 
 	for _, monitor := range monitors {

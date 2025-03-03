@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"aeroheart.io/hyprdisp/hypr"
+	"aeroheart.io/hyprdisp/hyprland"
 	"aeroheart.io/hyprdisp/profiles"
 	"aeroheart.io/hyprdisp/sys"
 )
@@ -62,20 +62,27 @@ func exec(ctx context.Context) error {
 	var (
 		logger   *log.Logger         = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 		ctrl     profiles.Controller = profiles.ControllerImpl{}
-		monitors []hypr.Monitor
+		monitors []hyprland.Monitor
 		err      error
 	)
 
-	monitors, err = hypr.GetMonitors()
+	monitors, err = hyprland.GetMonitors()
 	if err != nil {
 		return err
 	}
 
 	if !ctrl.Detect(ctx, monitors) {
+		logger.Printf("Configuration for monitors not found. Creating...")
 		return ctrl.Define(ctx, monitors)
+	} else {
+		logger.Printf("Found configuration for monitors doing nothing")
 	}
 
-	logger.Printf("Found configuration for monitors doing nothing")
+	err = ctrl.LoadPanels(ctx)
+	if err != nil {
+		logger.Printf("oh no: %v", err)
+	}
+
 	return nil
 }
 

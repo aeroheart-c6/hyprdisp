@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"aeroheart.io/hyprdisp/hypr"
+	"aeroheart.io/hyprdisp/hyprland"
 	"aeroheart.io/hyprdisp/sys"
 )
 
@@ -23,11 +23,11 @@ func Init(ctx context.Context) {
 	timer = time.NewTimer(0)
 }
 
-func ListenEvents(ctx context.Context, errs chan error, events chan hypr.Event) {
+func ListenEvents(ctx context.Context, errs chan error, events chan hyprland.Event) {
 	var logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 
 	for event := range events {
-		if event.Name != hypr.EventNameMonitorAdded && event.Name != hypr.EventNameMonitorRemoved {
+		if event.Name != hyprland.EventNameMonitorAdded && event.Name != hyprland.EventNameMonitorRemoved {
 			logger.Printf("Got irrelevant event: %v\n", event)
 			continue
 		}
