@@ -3,9 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"aeroheart.io/hyprdisp/hypr"
 	"aeroheart.io/hyprdisp/profiles"
@@ -63,51 +60,66 @@ func setupLogger(ctx context.Context) context.Context {
 
 func exec(ctx context.Context) error {
 	var (
-		hyprCtx          context.Context
-		hyprCancelFn     context.CancelFunc
-		profilesCtx      context.Context
-		profilesCancelFn context.CancelFunc
-		err              error
+		ctrl     profiles.Controller = profiles.ControllerImpl{}
+		monitors []hypr.Monitor
+		err      error
 	)
 
-	var (
-		hyprEvents chan hypr.Event
-		hyprErrs   chan error
-		profErrs   chan error = make(chan error, 1)
-	)
-
-	hyprCtx, hyprCancelFn = context.WithCancel(ctx)
-	defer hyprCancelFn()
-
-	profilesCtx, profilesCancelFn = context.WithCancel(ctx)
-	defer profilesCancelFn()
-
-	hyprEvents, hyprErrs, err = hypr.StreamEvents(hyprCtx)
+	monitors, err = hypr.GetMonitors()
 	if err != nil {
 		return err
 	}
+	return ctrl.Define(ctx, monitors)
 
-	profiles.Init(profilesCtx)
-	go profiles.ListenEvents(profilesCtx, profErrs, hyprEvents)
-	go profiles.ListenTimer(profilesCtx, profErrs)
-
-	// Wait for SIGTERM / SIGINT
-	var signals chan os.Signal
-
-	signals = make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-	defer close(signals)
-
-	select {
-	case <-signals:
-		hyprCancelFn()
-		profilesCancelFn()
-	case err = <-hyprErrs:
-		profilesCancelFn()
-	case err = <-profErrs:
-		hyprCancelFn()
-		profilesCancelFn()
-	}
-
-	return err
 }
+
+// func exec(ctx context.Context) error {
+// 	var (
+// 		hyprCtx          context.Context
+// 		hyprCancelFn     context.CancelFunc
+// 		profilesCtx      context.Context
+// 		profilesCancelFn context.CancelFunc
+// 		err              error
+// 	)
+
+// 	var (
+// 		hyprEvents chan hypr.Event
+// 		hyprErrs   chan error
+// 		profErrs   chan error = make(chan error, 1)
+// 	)
+
+// 	hyprCtx, hyprCancelFn = context.WithCancel(ctx)
+// 	defer hyprCancelFn()
+
+// 	profilesCtx, profilesCancelFn = context.WithCancel(ctx)
+// 	defer profilesCancelFn()
+
+// 	hyprEvents, hyprErrs, err = hypr.StreamEvents(hyprCtx)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	profiles.Init(profilesCtx)
+// 	go profiles.ListenEvents(profilesCtx, profErrs, hyprEvents)
+// 	go profiles.ListenTimer(profilesCtx, profErrs)
+
+// 	// Wait for SIGTERM / SIGINT
+// 	var signals chan os.Signal
+
+// 	signals = make(chan os.Signal, 1)
+// 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+// 	defer close(signals)
+
+// 	select {
+// 	case <-signals:
+// 		hyprCancelFn()
+// 		profilesCancelFn()
+// 	case err = <-hyprErrs:
+// 		profilesCancelFn()
+// 	case err = <-profErrs:
+// 		hyprCancelFn()
+// 		profilesCancelFn()
+// 	}
+
+// 	return err
+// }
