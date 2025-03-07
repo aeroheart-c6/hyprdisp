@@ -1,0 +1,25 @@
+[main]
+left = [
+    "workspaces",
+    "windowtitle",
+]
+middle = [
+    "media",
+    "notifications",
+]
+right = [
+    "volume",
+    "network",
+    "bluetooth",
+    "systray",
+    "clock",
+    "dashboard"
+]
+
+[sub]
+left = [
+    "workspaces",
+    "windowtitle"
+]
+middle = []
+right = []

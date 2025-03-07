@@ -1,0 +1,25 @@
+[DP-1]
+id = '0'
+main = true
+scale = 'auto'
+resolution = 'preferred'
+frequency = ''
+
+[[DP-1.workspaces]]
+id = '0001'
+default = true
+persistent = true
+decorate = true
+
+[DP-2]
+id = '1'
+main = false
+scale = 'auto'
+resolution = 'preferred'
+frequency = ''
+
+[[DP-2.workspaces]]
+id = '1001'
+default = true
+persistent = true
+decorate = true
