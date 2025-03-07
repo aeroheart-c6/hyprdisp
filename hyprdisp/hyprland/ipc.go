@@ -11,11 +11,6 @@ const (
 	envXDGRuntimeDirectory       = "XDG_RUNTIME_DIR"
 )
 
-type Event struct {
-	Name EventName
-	Data []string
-}
-
 func StreamEvents(ctx context.Context) (chan Event, chan error, error) {
 	var (
 		socketPath string
