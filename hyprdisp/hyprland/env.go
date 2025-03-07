@@ -82,3 +82,20 @@ func getCommandsSocketPath() (string, error) {
 		".socket.sock",
 	), nil
 }
+
+func getConfigPath() (string, error) {
+	var (
+		configDir string
+		err       error
+	)
+
+	configDir, err = os.UserConfigDir()
+	if err != nil {
+		return "", nil
+	}
+
+	return path.Join(
+		configDir,
+		"hypr",
+	), nil
+}
