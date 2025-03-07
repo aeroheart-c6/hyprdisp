@@ -14,7 +14,7 @@ func Test_parseMonitorsPayload(t *testing.T) {
 		err     error
 	)
 
-	file, err = os.Open("testdata/monitors.txt")
+	file, err = os.Open("testdata/input.valid-monitors.txt")
 	if err != nil {
 		t.Fatalf("failed reading sample monitors.txt file: %v", err)
 	}

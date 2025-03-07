@@ -83,7 +83,18 @@ func getCommandsSocketPath() (string, error) {
 	), nil
 }
 
+/*
+ * TODO make testable
+ *
+ * it is currently a pain to test because the working directory of the test is the directory of the test file. This
+ * means relative file operations will complain because on normal mode, it can find `./var` but not `./testdata` -- BUT
+ * testing mode is the reverse. It can find `./testdata` but not `./var`
+ *
+ * make the program more dynamic in this "configuration" value
+ */
 func getConfigPath() (string, error) {
+	return path.Join(".", "var"), nil
+
 	var (
 		configDir string
 		err       error

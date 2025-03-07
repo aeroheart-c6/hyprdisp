@@ -1,17 +1,25 @@
 package hyprland
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"strings"
 )
 
-func Apply(monitors []Monitor) error {
+func Apply(monitors []Monitor, workspaces []MonitorWorkspace) error {
 	var lines []string = make([]string, 0, len(monitors))
 
+	// apply monitor configurations
 	for _, monitor := range monitors {
-		lines = append(lines, serializeToConfig(monitor))
+		lines = append(lines, monitor.marshal())
+	}
+
+	lines = append(lines, "", "")
+
+	// apply workspace configurations
+	for _, workspace := range workspaces {
+		lines = append(lines, workspace.marshal()...)
+		lines = append(lines, "")
 	}
 
 	var (
@@ -24,7 +32,7 @@ func Apply(monitors []Monitor) error {
 		return err
 	}
 
-	filePath = path.Join(filePath, "hypr-displays.conf")
+	filePath = path.Join(filePath, "actual.hypr-displays.conf")
 	file, err = os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
@@ -36,13 +44,4 @@ func Apply(monitors []Monitor) error {
 	}
 
 	return nil
-}
-
-func serializeToConfig(monitor Monitor) string {
-	return fmt.Sprintf("monitor = %s, %s, %s, %s",
-		monitor.Name,
-		monitor.Resolution,
-		monitor.Position,
-		monitor.Scale,
-	)
 }

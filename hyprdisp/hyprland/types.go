@@ -11,6 +11,23 @@ type Event struct {
 	Data []string
 }
 
+type MonitorWorkspace struct {
+	ID         string
+	Monitor    string
+	Default    bool
+	Persistent bool
+	Decorate   bool
+}
+
+func (m MonitorWorkspace) marshal() []string {
+	return []string{
+		fmt.Sprintf("workspace = %s, monitor:%s", m.ID, m.Monitor),
+		fmt.Sprintf("workspace = %s, default:%t", m.ID, m.Default),
+		fmt.Sprintf("workspace = %s, persistent:%t", m.ID, m.Persistent),
+		fmt.Sprintf("workspace = %s, decorate:%t", m.ID, m.Decorate),
+	}
+}
+
 type Monitor struct {
 	ID          string
 	Name        string
@@ -61,6 +78,15 @@ func (m *Monitor) set(field string, value string) error {
 	}
 
 	return nil
+}
+
+func (m Monitor) marshal() string {
+	return fmt.Sprintf("monitor = %s, %s, %s, %s",
+		m.Name,
+		m.Resolution,
+		m.Position,
+		m.Scale,
+	)
 }
 
 func (m Monitor) String() string {
