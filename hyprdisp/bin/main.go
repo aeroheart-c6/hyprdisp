@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"aeroheart.io/hyprdisp/hyprland"
+	"aeroheart.io/hyprdisp/hyprpanel"
 	"aeroheart.io/hyprdisp/profiles"
 	"aeroheart.io/hyprdisp/sys"
 )
@@ -60,11 +61,12 @@ func setupLogger(ctx context.Context) context.Context {
 
 func exec(ctx context.Context) error {
 	var (
-		logger      *log.Logger      = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
-		hyprlandSrv hyprland.Service = hyprland.NewDefaultService()
-		profilesSrv profiles.Service = profiles.NewDefaultService(hyprlandSrv)
-		monitors    []hyprland.Monitor
-		err         error
+		logger       *log.Logger       = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		hyprlandSrv  hyprland.Service  = hyprland.NewDefaultService()
+		hyprpanelSrv hyprpanel.Service = hyprpanel.NewDefaultService()
+		profilesSrv  profiles.Service  = profiles.NewDefaultService(hyprlandSrv)
+		monitors     []hyprland.Monitor
+		err          error
 	)
 
 	monitors, err = hyprlandSrv.GetMonitors()
@@ -83,6 +85,8 @@ func exec(ctx context.Context) error {
 	if err != nil {
 		logger.Printf("oh no: %v", err)
 	}
+
+	hyprpanelSrv.Apply(nil)
 
 	return nil
 }
