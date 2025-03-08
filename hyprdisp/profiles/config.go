@@ -15,7 +15,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-func (c ControllerImpl) Detect(ctx context.Context, monitors []hyprland.Monitor) bool {
+func (s defaultService) Detect(ctx context.Context, monitors []hyprland.Monitor) bool {
 	var (
 		configID   string = getDisplaysConfigID(monitors)
 		configPath string = getDisplaysConfigPath(ctx, configID)
@@ -27,7 +27,7 @@ func (c ControllerImpl) Detect(ctx context.Context, monitors []hyprland.Monitor)
 }
 
 // Define will create a set of config files with default values based on `hyprctl monitors` output
-func (c ControllerImpl) Define(ctx context.Context, monitors []hyprland.Monitor) error {
+func (s defaultService) Define(ctx context.Context, monitors []hyprland.Monitor) error {
 	var logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 
 	var displays displayProfile = make(displayProfile, len(monitors))

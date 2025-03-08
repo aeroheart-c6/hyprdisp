@@ -56,7 +56,11 @@ func Test_Apply(t *testing.T) {
 		},
 	}
 
-	err = Apply(monitors, workspaces)
+	var service defaultService = defaultService{
+		overrideConfigPath: path.Join("testdata"),
+	}
+
+	err = service.Apply(monitors, workspaces)
 	if err != nil {
 		t.Fatalf("configuration application failure: %v", err)
 	}
@@ -67,13 +71,13 @@ func Test_Apply(t *testing.T) {
 		expectData []byte
 	)
 
-	actualPath, err = getConfigPath()
+	actualPath, err = service.getConfigPath()
 	if err != nil {
 		t.Fatalf("failed to get configuration path: %v", err)
 	}
 	actualData, err = os.ReadFile(path.Join(
 		actualPath,
-		"actual.hypr-displays.conf",
+		"hypr-monitors.conf",
 	))
 	if err != nil {
 		t.Fatalf("failed reading output file: %v", err)

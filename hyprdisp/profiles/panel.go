@@ -12,7 +12,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-func (c ControllerImpl) LoadPanels(ctx context.Context) error {
+func (s defaultService) LoadPanels(ctx context.Context) error {
 	var (
 		logger   *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 		filePath string      = path.Join(".", "var", "panels.toml")

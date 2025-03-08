@@ -14,16 +14,7 @@ type state string
 // TODO it's actually just 2 - 3 seconds wait
 const triggerDuration time.Duration = 5 * time.Second
 
-var (
-	timer        *time.Timer
-	currentState state
-)
-
-func Init(ctx context.Context) {
-	timer = time.NewTimer(0)
-}
-
-func ListenEvents(ctx context.Context, errs chan error, events chan hyprland.Event) {
+func (s defaultService) ListenEvents(ctx context.Context, errs chan error, events chan hyprland.Event) {
 	var logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 
 	for event := range events {
@@ -33,14 +24,14 @@ func ListenEvents(ctx context.Context, errs chan error, events chan hyprland.Eve
 		}
 
 		logger.Printf("Got monitor event: %v\n", event)
-		timer.Reset(triggerDuration)
+		s.timer.Reset(triggerDuration)
 	}
 }
 
-func ListenTimer(ctx context.Context, errs chan error) {
+func (s defaultService) ListenTimer(ctx context.Context, errs chan error) {
 	var logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 
-	for moment := range timer.C {
+	for moment := range s.timer.C {
 		logger.Printf("whoopps I just triggered! at %v\n", moment.Format(time.RFC3339))
 
 		triggerConfigUpdates()

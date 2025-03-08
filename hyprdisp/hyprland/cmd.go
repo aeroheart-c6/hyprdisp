@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func GetMonitors() ([]Monitor, error) {
+func (s defaultService) GetMonitors() ([]Monitor, error) {
 	var (
 		socketPath string
 		socketConn net.Conn

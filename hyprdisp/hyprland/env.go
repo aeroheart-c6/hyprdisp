@@ -92,21 +92,20 @@ func getCommandsSocketPath() (string, error) {
  *
  * make the program more dynamic in this "configuration" value
  */
-func getConfigPath() (string, error) {
-	return path.Join(".", "var"), nil
+func (s defaultService) getConfigPath() (string, error) {
+	if s.overrideConfigPath != "" {
+		return s.overrideConfigPath, nil
+	}
 
 	var (
-		configDir string
-		err       error
+		dir string
+		err error
 	)
 
-	configDir, err = os.UserConfigDir()
+	dir, err = os.UserConfigDir()
 	if err != nil {
 		return "", nil
 	}
 
-	return path.Join(
-		configDir,
-		"hypr",
-	), nil
+	return path.Join(dir, "hypr"), nil
 }

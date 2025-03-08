@@ -11,7 +11,7 @@ const (
 	envXDGRuntimeDirectory       = "XDG_RUNTIME_DIR"
 )
 
-func StreamEvents(ctx context.Context) (chan Event, chan error, error) {
+func (s defaultService) StreamEvents(ctx context.Context) (chan Event, chan error, error) {
 	var (
 		socketPath string
 		socketConn net.Conn

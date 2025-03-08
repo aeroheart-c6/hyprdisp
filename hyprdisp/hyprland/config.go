@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func Apply(monitors []Monitor, workspaces []MonitorWorkspace) error {
+func (s defaultService) Apply(monitors []Monitor, workspaces []MonitorWorkspace) error {
 	var lines []string = make([]string, 0, len(monitors))
 
 	// apply monitor configurations
@@ -27,12 +27,12 @@ func Apply(monitors []Monitor, workspaces []MonitorWorkspace) error {
 		file     *os.File
 		err      error
 	)
-	filePath, err = getConfigPath()
+	filePath, err = s.getConfigPath()
 	if err != nil {
 		return err
 	}
 
-	filePath = path.Join(filePath, "actual.hypr-displays.conf")
+	filePath = path.Join(filePath, "hypr-monitors.conf")
 	file, err = os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err

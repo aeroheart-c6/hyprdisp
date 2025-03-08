@@ -60,25 +60,26 @@ func setupLogger(ctx context.Context) context.Context {
 
 func exec(ctx context.Context) error {
 	var (
-		logger   *log.Logger         = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
-		ctrl     profiles.Controller = profiles.ControllerImpl{}
-		monitors []hyprland.Monitor
-		err      error
+		logger      *log.Logger      = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		hyprlandSrv hyprland.Service = hyprland.NewDefaultService()
+		profilesSrv profiles.Service = profiles.NewDefaultService(hyprlandSrv)
+		monitors    []hyprland.Monitor
+		err         error
 	)
 
-	monitors, err = hyprland.GetMonitors()
+	monitors, err = hyprlandSrv.GetMonitors()
 	if err != nil {
 		return err
 	}
 
-	if !ctrl.Detect(ctx, monitors) {
+	if !profilesSrv.Detect(ctx, monitors) {
 		logger.Printf("Configuration for monitors not found. Creating...")
-		return ctrl.Define(ctx, monitors)
+		return profilesSrv.Define(ctx, monitors)
 	} else {
 		logger.Printf("Found configuration for monitors doing nothing")
 	}
 
-	err = ctrl.LoadPanels(ctx)
+	err = profilesSrv.LoadPanels(ctx)
 	if err != nil {
 		logger.Printf("oh no: %v", err)
 	}
