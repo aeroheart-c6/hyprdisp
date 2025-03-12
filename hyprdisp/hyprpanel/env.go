@@ -6,8 +6,8 @@ import (
 )
 
 func (s defaultService) getConfigPath() (string, error) {
-	if s.overrideConfigPath != "" {
-		return s.overrideConfigPath, nil
+	if s.cfgPath != "" {
+		return s.cfgPath, nil
 	}
 
 	var (
@@ -20,7 +20,7 @@ func (s defaultService) getConfigPath() (string, error) {
 		return "", nil
 	}
 
-	return path.Join(dir, "hyprpanel"), nil
+	return path.Join(dir, cfgDirectory), nil
 }
 
 func (s defaultService) getConfigFilePath() (string, error) {
@@ -34,5 +34,5 @@ func (s defaultService) getConfigFilePath() (string, error) {
 		return "", nil
 	}
 
-	return path.Join(dir, "config.json"), nil
+	return path.Join(dir, s.cfgFile), nil
 }

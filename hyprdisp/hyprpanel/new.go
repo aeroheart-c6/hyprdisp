@@ -1,15 +1,22 @@
 package hyprpanel
 
+import "context"
+
+const (
+	cfgKeyLayouts string = "bar.layouts"
+	cfgIndent     string = "    "
+	cfgDirectory  string = "hyprpanel"
+)
+
 type Service interface {
-	Apply(BarLayout) error
+	Apply(context.Context, BarLayout) error
 }
 
 type defaultService struct {
-	overrideConfigPath string
+	cfgPath string
+	cfgFile string
 }
 
 func NewDefaultService() Service {
-	return defaultService{
-		overrideConfigPath: "var",
-	}
+	return defaultService{}
 }

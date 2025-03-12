@@ -6,6 +6,11 @@ import (
 	"path"
 )
 
+const (
+	envHyprlandInstanceSignature = "HYPRLAND_INSTANCE_SIGNATURE"
+	envXDGRuntimeDirectory       = "XDG_RUNTIME_DIR"
+)
+
 func getInstanceID() (string, error) {
 	var (
 		value string
@@ -31,7 +36,7 @@ func getRuntimePath() (string, error) {
 		return "", errors.New("hyprland runtime path could not be acquired")
 	}
 
-	return path.Join(value, "hypr"), nil
+	return path.Join(value, cfgDirectory), nil
 
 }
 
@@ -52,11 +57,7 @@ func getEventsSocketPath() (string, error) {
 		return "", nil
 	}
 
-	return path.Join(
-		runtimeDir,
-		instanceID,
-		".socket2.sock",
-	), nil
+	return path.Join(runtimeDir, instanceID, ".socket2.sock"), nil
 }
 
 func getCommandsSocketPath() (string, error) {
@@ -76,11 +77,7 @@ func getCommandsSocketPath() (string, error) {
 		return "", nil
 	}
 
-	return path.Join(
-		runtimeDir,
-		instanceID,
-		".socket.sock",
-	), nil
+	return path.Join(runtimeDir, instanceID, ".socket.sock"), nil
 }
 
 /*
@@ -93,8 +90,8 @@ func getCommandsSocketPath() (string, error) {
  * make the program more dynamic in this "configuration" value
  */
 func (s defaultService) getConfigPath() (string, error) {
-	if s.overrideConfigPath != "" {
-		return s.overrideConfigPath, nil
+	if s.cfgPath != "" {
+		return s.cfgPath, nil
 	}
 
 	var (
@@ -107,5 +104,5 @@ func (s defaultService) getConfigPath() (string, error) {
 		return "", nil
 	}
 
-	return path.Join(dir, "hypr"), nil
+	return path.Join(dir, cfgDirectory), nil
 }

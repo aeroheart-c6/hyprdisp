@@ -1,6 +1,7 @@
 package hyprland
 
 import (
+	"context"
 	"os"
 	"path"
 	"testing"
@@ -8,6 +9,7 @@ import (
 
 func Test_Apply(t *testing.T) {
 	var (
+		ctx        context.Context = context.Background()
 		monitors   []Monitor
 		workspaces []MonitorWorkspace
 		err        error
@@ -57,10 +59,10 @@ func Test_Apply(t *testing.T) {
 	}
 
 	var service defaultService = defaultService{
-		overrideConfigPath: path.Join("testdata"),
+		cfgPath: path.Join("testdata"),
 	}
 
-	err = service.Apply(monitors, workspaces)
+	err = service.Apply(ctx, monitors, workspaces)
 	if err != nil {
 		t.Fatalf("configuration application failure: %v", err)
 	}

@@ -6,11 +6,6 @@ import (
 	"strings"
 )
 
-const (
-	envHyprlandInstanceSignature = "HYPRLAND_INSTANCE_SIGNATURE"
-	envXDGRuntimeDirectory       = "XDG_RUNTIME_DIR"
-)
-
 func (s defaultService) StreamEvents(ctx context.Context) (chan Event, chan error, error) {
 	var (
 		socketPath string

@@ -1,34 +1,40 @@
 package hyprland
 
 import (
+	"context"
+	"log"
 	"os"
 	"path"
 	"strings"
+
+	"aeroheart.io/hyprdisp/sys"
 )
 
-func (s defaultService) Apply(monitors []Monitor, workspaces []MonitorWorkspace) error {
+func (s defaultService) Apply(
+	ctx context.Context,
+	monitors []Monitor,
+	workspaces []MonitorWorkspace,
+) error {
 	var (
-		basepath string
-		err      error
+		logger  *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		cfgPath string
+		err     error
 	)
 
-	basepath, err = s.getConfigPath()
+	cfgPath, err = s.getConfigPath()
+	if err != nil {
+		return err
+	}
+	logger.Printf("Resovled configuration directory to: %s", cfgPath)
+
+	logger.Printf("Writing monitors configuration to: %s", s.cfgMonitors)
+	err = writeConfigMonitors(ctx, path.Join(cfgPath, s.cfgMonitors), monitors)
 	if err != nil {
 		return err
 	}
 
-	err = writeConfigMonitors(
-		path.Join(basepath, "hypr-monitors.conf"),
-		monitors,
-	)
-	if err != nil {
-		return err
-	}
-
-	err = writeConfigWorkspaces(
-		path.Join(basepath, "hypr-workspaces.conf"),
-		workspaces,
-	)
+	logger.Printf("Writing workspaces configuration to: %s", s.cfgWorkspaces)
+	err = writeConfigWorkspaces(ctx, path.Join(cfgPath, s.cfgWorkspaces), workspaces)
 	if err != nil {
 		return err
 	}
@@ -36,28 +42,35 @@ func (s defaultService) Apply(monitors []Monitor, workspaces []MonitorWorkspace)
 	return nil
 }
 
-func writeConfigMonitors(filepath string, monitors []Monitor) error {
-	var lines []string = make([]string, 0, len(monitors))
+func writeConfigMonitors(ctx context.Context, filepath string, monitors []Monitor) error {
+	var (
+		logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		lines  []string    = make([]string, 0, len(monitors))
+	)
 
-	// apply monitor configurations
+	logger.Printf("Marshalling monitor configurations")
 	for _, monitor := range monitors {
 		lines = append(lines, monitor.marshal())
 	}
-
 	lines = append(lines, "")
 
+	logger.Printf("Saving monitor configurations")
 	return writeConfig(filepath, []byte(strings.Join(lines, "\n")))
 }
 
-func writeConfigWorkspaces(filepath string, workspaces []MonitorWorkspace) error {
-	var lines []string = make([]string, 0, len(workspaces))
+func writeConfigWorkspaces(ctx context.Context, filepath string, workspaces []MonitorWorkspace) error {
+	var (
+		logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		lines  []string    = make([]string, 0, len(workspaces))
+	)
 
-	// apply workspace configurations
+	logger.Printf("Marshalling workspace configurations")
 	for _, workspace := range workspaces {
 		lines = append(lines, workspace.marshal()...)
 		lines = append(lines, "")
 	}
 
+	logger.Printf("Saving workspace configurations")
 	return writeConfig(filepath, []byte(strings.Join(lines, "\n")))
 }
 

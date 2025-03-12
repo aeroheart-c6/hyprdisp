@@ -1,12 +1,20 @@
 package hyprpanel
 
 import (
+	"context"
 	"encoding/json"
+	"log"
 	"os"
+
+	"aeroheart.io/hyprdisp/sys"
 )
 
-func (s defaultService) Apply(layout BarLayout) error {
+func (s defaultService) Apply(
+	ctx context.Context,
+	layout BarLayout,
+) error {
 	var (
+		logger  *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 		cfgPath string
 		cfg     map[string]any
 		err     error
@@ -17,16 +25,16 @@ func (s defaultService) Apply(layout BarLayout) error {
 		return err
 	}
 
-	// unmarshal current configuration JSON file
+	logger.Printf("Loading configuration file at: %s", cfgPath)
 	cfg, err = loadConfig(cfgPath)
 	if err != nil {
 		return err
 	}
 
 	// add BarLayout instance into the map
-	cfg["bar.layouts"] = layout
+	cfg[cfgKeyLayouts] = layout
 
-	// write the configuration file
+	logger.Printf("Writing configuration file at: %s", cfgPath)
 	err = writeConfig(cfgPath, cfg)
 	if err != nil {
 		return err
@@ -66,7 +74,7 @@ func writeConfig(cfgPath string, cfg map[string]any) error {
 		return err
 	}
 
-	data, err = json.MarshalIndent(cfg, "", "    ")
+	data, err = json.MarshalIndent(cfg, "", cfgIndent)
 	if err != nil {
 		return err
 	}

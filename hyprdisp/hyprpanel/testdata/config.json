@@ -1,0 +1,57 @@
+{
+    "bar.customModules.updates.pollingInterval": 1440000,
+    "bar.layouts": {
+        "0": {
+            "left": [
+                "workspaces",
+                "windowtitle"
+            ],
+            "right": [],
+            "middle": [
+                "clock",
+                "notifications",
+                "media"
+            ]
+        }
+    },
+    "menus.clock.time.hideSeconds": true,
+    "menus.clock.time.military": true,
+    "menus.clock.weather.location": "Singapore",
+    "menus.clock.weather.unit": "metric",
+    "menus.dashboard.controls.enabled": true,
+    "menus.dashboard.directories.enabled": true,
+    "menus.dashboard.directories.left.directory1.command": "bash -c \"xdg-open $(xdg-user-dir DOWNLOAD)\"",
+    "menus.dashboard.directories.left.directory2.command": "bash -c \"xdg-open $(xdg-user-dir VIDEOS)\"",
+    "menus.dashboard.directories.left.directory3.command": "bash -c \"xdg-open $HOME/dev/projects/\"",
+    "menus.dashboard.directories.right.directory1.command": "bash -c \"xdg-open $(xdg-user-dir DOCUMENTS)\"",
+    "menus.dashboard.directories.right.directory2.command": "bash -c \"xdg-open $(xdg-user-dir PICTURES)\"",
+    "menus.dashboard.shortcuts.enabled": true,
+    "menus.dashboard.shortcuts.left.shortcut1.command": "spotify-launcher",
+    "menus.dashboard.shortcuts.left.shortcut1.icon": "",
+    "menus.dashboard.shortcuts.left.shortcut1.tooltip": "Spotify",
+    "menus.dashboard.shortcuts.left.shortcut2.command": "discord",
+    "menus.dashboard.shortcuts.left.shortcut2.icon": "",
+    "menus.dashboard.shortcuts.left.shortcut2.tooltip": "Discord",
+    "menus.dashboard.shortcuts.left.shortcut3.command": "nautilus",
+    "menus.dashboard.shortcuts.left.shortcut3.icon": "",
+    "menus.dashboard.shortcuts.left.shortcut3.tooltip": "Files",
+    "menus.dashboard.shortcuts.left.shortcut4.command": "",
+    "menus.dashboard.shortcuts.left.shortcut4.icon": "",
+    "menus.dashboard.shortcuts.left.shortcut4.tooltip": "",
+    "menus.dashboard.shortcuts.right.shortcut3.command": "hyprpanel-snapshot.sh",
+    "menus.dashboard.stats.interval": 2000,
+    "menus.power.confirmation": true,
+    "menus.power.showLabel": true,
+    "menus.transition": "crossfade",
+    "notifications.monitor": 1,
+    "notifications.position": "top",
+    "theme.bar.border.location": "none",
+    "theme.bar.buttons.enableBorders": false,
+    "theme.bar.layer": "top",
+    "theme.bar.menus.menu.dashboard.profile.size": "8.5em",
+    "theme.bar.menus.monochrome": false,
+    "theme.font.label": "Monaspace Krypton",
+    "theme.font.name": "Monaspace Krypton",
+    "theme.font.size": "1rem",
+    "theme.font.weight": 400
+}
