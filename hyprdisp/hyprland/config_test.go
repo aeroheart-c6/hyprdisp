@@ -75,20 +75,30 @@ func Test_Apply(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to get configuration path: %v", err)
 	}
-	actualData, err = os.ReadFile(path.Join(
-		actualPath,
-		"hypr-monitors.conf",
-	))
+
+	actualData, err = os.ReadFile(path.Join(actualPath, "hypr-monitors.conf"))
 	if err != nil {
 		t.Fatalf("failed reading output file: %v", err)
 	}
-
-	expectData, err = os.ReadFile("testdata/expect.valid-displays.conf")
+	expectData, err = os.ReadFile("testdata/expect.valid-monitors.conf")
 	if err != nil {
 		t.Fatalf("failed reading sample file: %v", err)
 	}
 
 	if string(expectData) != string(actualData) {
-		t.Fatalf("expected configurations to be the same")
+		t.Fatalf("expected monitor configurations to be the same")
+	}
+
+	actualData, err = os.ReadFile(path.Join(actualPath, "hypr-workspaces.conf"))
+	if err != nil {
+		t.Fatalf("failed reading output file: %v", err)
+	}
+	expectData, err = os.ReadFile("testdata/expect.valid-workspaces.conf")
+	if err != nil {
+		t.Fatalf("failed reading sample file: %v", err)
+	}
+
+	if string(expectData) != string(actualData) {
+		t.Fatalf("expected workspace configurations to be the same")
 	}
 }
