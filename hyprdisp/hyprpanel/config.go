@@ -2,46 +2,40 @@ package hyprpanel
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
-	"path"
 )
 
 func (s defaultService) Apply(layout BarLayout) error {
 	var (
-		cfgDirPath string
-		err        error
+		cfgPath string
+		cfg     map[string]any
+		err     error
 	)
 
-	cfgDirPath, err = os.UserConfigDir()
+	cfgPath, err = s.getConfigFilePath()
 	if err != nil {
 		return err
 	}
 
 	// unmarshal current configuration JSON file
-	var cfg map[string]any
-
-	cfg, err = unmarshalConfig(path.Join(
-		cfgDirPath,
-		"hyprpanel",
-		"config.json",
-	))
+	cfg, err = loadConfig(cfgPath)
 	if err != nil {
 		return err
 	}
 
-	for k, v := range cfg {
-		fmt.Printf("%v == %+v\n", k, v)
-	}
-
 	// add BarLayout instance into the map
+	cfg["bar.layouts"] = layout
 
 	// write the configuration file
+	err = writeConfig(cfgPath, cfg)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func unmarshalConfig(cfgPath string) (map[string]any, error) {
+func loadConfig(cfgPath string) (map[string]any, error) {
 	var (
 		data []byte
 		err  error
@@ -59,4 +53,28 @@ func unmarshalConfig(cfgPath string) (map[string]any, error) {
 	}
 
 	return cfg, nil
+}
+
+func writeConfig(cfgPath string, cfg map[string]any) error {
+	var (
+		file *os.File
+		data []byte
+		err  error
+	)
+	file, err = os.OpenFile(cfgPath, os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+
+	data, err = json.MarshalIndent(cfg, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(data)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

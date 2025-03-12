@@ -5,8 +5,11 @@ type Service interface {
 }
 
 type defaultService struct {
+	overrideConfigPath string
 }
 
 func NewDefaultService() Service {
-	return defaultService{}
+	return defaultService{
+		overrideConfigPath: "var",
+	}
 }
