@@ -7,18 +7,28 @@ import (
 	"aeroheart.io/hyprdisp/hyprland"
 )
 
+const (
+	cfgDirectory string = "hyprdisp"
+)
+
 type Service interface {
 	Detect(context.Context, []hyprland.Monitor) bool
-	Define(context.Context, []hyprland.Monitor) error
-	LoadPanels(context.Context) error
+	Init(context.Context, []hyprland.Monitor) error
+	ApplyMonitors(context.Context) error
+	ApplyPanels(context.Context) error
 	ListenEvents(context.Context, chan error, chan hyprland.Event)
 	ListenTimer(context.Context, chan error)
 }
 
 type defaultService struct {
 	hyprland hyprland.Service
+	cfgPath  string
 	timer    *time.Timer
 	state    state
+}
+
+func (s defaultService) ApplyMonitors(context.Context) error {
+	return nil
 }
 
 func NewDefaultService(hyprlandService hyprland.Service) Service {

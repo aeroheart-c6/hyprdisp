@@ -15,26 +15,37 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+const (
+	keyDefaultPanelMain string = "main"
+	keyDefaultPanelSub  string = "sub"
+)
+
+// Detect will check if the appropriate configuration file for the active monitors already exists
 func (s defaultService) Detect(ctx context.Context, monitors []hyprland.Monitor) bool {
 	var (
-		configID   string = getDisplaysConfigID(monitors)
-		configPath string = getDisplaysConfigPath(ctx, configID)
-		err        error
+		profileID   string = getProfileID(monitors)
+		profilePath string
+		err         error
 	)
 
-	_, err = os.Stat(configPath)
+	profilePath, err = s.getProfilePath(profileID)
+	if err != nil {
+		return false
+	}
+
+	_, err = os.Stat(profilePath)
 	return err == nil
 }
 
-// Define will create a set of config files with default values based on `hyprctl monitors` output
-func (s defaultService) Define(ctx context.Context, monitors []hyprland.Monitor) error {
+// Init will create a set of config files with default values based on `hyprctl monitors` output
+func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monitor) error {
 	var logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 
-	var displays displayProfile = make(displayProfile, len(monitors))
-	for _, monitor := range monitors {
+	var monitors monitorProfile = make(monitorProfile, len(hyprMonitors))
+	for _, monitor := range hyprMonitors {
 		logger.Printf("Found monitor (enabled: %v): %+v", monitor.Enabled, monitor)
 
-		displays[monitor.Name] = displayConfig{
+		monitors[monitor.Name] = monitorConfig{
 			ID:         monitor.ID,
 			Main:       monitor.ID == "0",
 			Scale:      "auto",
@@ -51,25 +62,59 @@ func (s defaultService) Define(ctx context.Context, monitors []hyprland.Monitor)
 		}
 	}
 
-	return saveDisplaysConfig(ctx, getDisplaysConfigID(monitors), displays)
+	var profile profileConfig = profileConfig{
+		Panels: panelProfile{
+			keyDefaultPanelMain: panelConfig{
+				L: []string{
+					"workspaces",
+					"windowtitle",
+				},
+				M: []string{},
+				R: []string{
+					"volume",
+					"network",
+					"bluetooth",
+					"systray",
+					"clock",
+					"dashboard",
+				},
+			},
+			keyDefaultPanelSub: panelConfig{
+				L: []string{
+					"workspaces",
+					"windowtitle",
+				},
+				M: []string{},
+				R: []string{},
+			},
+		},
+		Monitors: monitors,
+	}
+
+	return s.saveProfile(ctx, getProfileID(hyprMonitors), profile)
 }
 
-func saveDisplaysConfig(ctx context.Context, id string, displays displayProfile) error {
+func (s defaultService) saveProfile(ctx context.Context, id string, profile profileConfig) error {
 	var (
 		logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 		body   []byte
 		err    error
 	)
 
-	body, err = toml.Marshal(displays)
+	body, err = toml.Marshal(profile)
 	if err != nil {
 		return err
 	}
 
 	var (
-		filePath string = getDisplaysConfigPath(ctx, id)
+		filePath string
 		file     *os.File
 	)
+	filePath, err = s.getProfilePath(id)
+	if err != nil {
+		return err
+	}
+
 	file, err = os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
@@ -86,19 +131,24 @@ func saveDisplaysConfig(ctx context.Context, id string, displays displayProfile)
 	return nil
 }
 
-func loadDisplaysConfig(ctx context.Context, id string) (displayProfile, error) {
+func (s defaultService) loadProfile(ctx context.Context, id string) (monitorProfile, error) {
 	var (
-		filePath string = getDisplaysConfigPath(ctx, id)
+		filePath string
 		data     []byte
 		err      error
 	)
+
+	filePath, err = s.getProfilePath(id)
+	if err != nil {
+		return nil, err
+	}
 
 	data, err = os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
 
-	var displays displayProfile
+	var displays monitorProfile
 	err = toml.Unmarshal(data, &displays)
 	if err != nil {
 		return nil, err
@@ -107,11 +157,21 @@ func loadDisplaysConfig(ctx context.Context, id string) (displayProfile, error) 
 	return displays, nil
 }
 
-func getDisplaysConfigPath(ctx context.Context, id string) string {
-	return path.Join(".", "var", fmt.Sprintf("%v.toml", id))
+func (s defaultService) getProfilePath(id string) (string, error) {
+	var (
+		confPath string
+		err      error
+	)
+
+	confPath, err = s.getConfigPath()
+	if err != nil {
+		return "", err
+	}
+
+	return path.Join(confPath, fmt.Sprintf("%v.toml", id)), nil
 }
 
-func getDisplaysConfigID(monitors []hyprland.Monitor) string {
+func getProfileID(monitors []hyprland.Monitor) string {
 	var hash *sha3.SHA3 = sha3.New256()
 
 	for _, monitor := range monitors {

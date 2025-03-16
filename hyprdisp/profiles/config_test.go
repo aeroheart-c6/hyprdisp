@@ -32,7 +32,7 @@ func Test_parseConfig(t *testing.T) {
 	}
 
 	var (
-		cfg map[string]displayConfig
+		cfg map[string]monitorConfig
 	)
 	err = toml.Unmarshal([]byte(data), &cfg)
 	if err != nil {

@@ -1,8 +1,8 @@
 package profiles
 
-type displayProfile map[string]displayConfig
+type monitorProfile map[string]monitorConfig
 
-type displayConfig struct {
+type monitorConfig struct {
 	ID         string            `toml:"id"`
 	Main       bool              `toml:"main"`
 	Resolution string            `toml:"resolution"`
@@ -24,4 +24,9 @@ type panelConfig struct {
 	L []string `toml:"left"`
 	R []string `toml:"right"`
 	M []string `toml:"middle"`
+}
+
+type profileConfig struct {
+	Panels   panelProfile   `toml:"panels"`
+	Monitors monitorProfile `toml:"monitors"`
 }

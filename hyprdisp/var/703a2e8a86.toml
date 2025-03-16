@@ -1,24 +1,55 @@
-[DP-1]
+[panels]
+
+[panels.main]
+left = [
+    "workspaces",
+    "windowtitle",
+]
+middle = [
+    "media",
+    "notifications",
+]
+right = [
+    "volume",
+    "network",
+    "bluetooth",
+    "systray",
+    "clock",
+    "dashboard"
+]
+
+[panels.sub]
+left = [
+    "workspaces",
+    "windowtitle"
+]
+middle = []
+right = []
+
+
+[monitors]
+
+[monitors.DP-1]
 id = '0'
 main = true
 scale = 'auto'
 resolution = 'preferred'
 frequency = ''
 
-[[DP-1.workspaces]]
+[[monitors.DP-1.workspaces]]
 id = '0001'
 default = true
 persistent = true
 decorate = true
 
-[DP-2]
+[monitors.DP-2]
 id = '1'
 main = false
 scale = 'auto'
 resolution = 'preferred'
 frequency = ''
 
-[[DP-2.workspaces]]
+[[monitors.DP-2.workspaces]]
 id = '1001'
 default = true
 persistent = true

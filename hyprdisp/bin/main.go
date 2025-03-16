@@ -76,17 +76,30 @@ func exec(ctx context.Context) error {
 
 	if !profilesSrv.Detect(ctx, monitors) {
 		logger.Printf("Configuration for monitors not found. Creating...")
-		return profilesSrv.Define(ctx, monitors)
+		return profilesSrv.Init(ctx, monitors)
 	} else {
 		logger.Printf("Found configuration for monitors doing nothing")
 	}
 
-	err = profilesSrv.LoadPanels(ctx)
+	err = profilesSrv.ApplyPanels(ctx)
 	if err != nil {
 		logger.Printf("oh no: %v", err)
 	}
 
-	hyprpanelSrv.Apply(nil)
+	hyprpanelSrv.Apply(ctx, hyprpanel.BarLayout{
+		"0": hyprpanel.BarWidgetConfig{
+			L: []string{
+				"workspaces",
+				"windowtitle",
+			},
+			R: []string{},
+			M: []string{
+				"clock",
+				"notifications",
+				"media",
+			},
+		},
+	})
 
 	return nil
 }
