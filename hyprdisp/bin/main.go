@@ -64,8 +64,9 @@ func exec(ctx context.Context) error {
 		logger       *log.Logger       = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 		hyprlandSrv  hyprland.Service  = hyprland.NewDefaultService()
 		hyprpanelSrv hyprpanel.Service = hyprpanel.NewDefaultService()
-		profilesSrv  profiles.Service  = profiles.NewDefaultService(hyprlandSrv)
+		profilesSrv  profiles.Service  = profiles.NewDefaultService(hyprlandSrv, hyprpanelSrv)
 		monitors     []hyprland.Monitor
+		profileCfg   profiles.Config
 		err          error
 	)
 
@@ -74,32 +75,26 @@ func exec(ctx context.Context) error {
 		return err
 	}
 
-	if !profilesSrv.Detect(ctx, monitors) {
+	profileCfg, err = profilesSrv.Detect(ctx, monitors)
+	if err != nil {
+		return err
+	}
+
+	if profileCfg.IsZero() {
 		logger.Printf("Configuration for monitors not found. Creating...")
-		return profilesSrv.Init(ctx, monitors)
+
+		profileCfg, err = profilesSrv.Init(ctx, monitors)
+		if err != nil {
+			return err
+		}
 	} else {
 		logger.Printf("Found configuration for monitors doing nothing")
 	}
 
-	err = profilesSrv.ApplyPanels(ctx)
+	err = profilesSrv.Apply(ctx, profileCfg)
 	if err != nil {
 		logger.Printf("oh no: %v", err)
 	}
-
-	hyprpanelSrv.Apply(ctx, hyprpanel.BarLayout{
-		"0": hyprpanel.BarWidgetConfig{
-			L: []string{
-				"workspaces",
-				"windowtitle",
-			},
-			R: []string{},
-			M: []string{
-				"clock",
-				"notifications",
-				"media",
-			},
-		},
-	})
 
 	return nil
 }

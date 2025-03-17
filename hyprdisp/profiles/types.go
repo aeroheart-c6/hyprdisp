@@ -26,7 +26,11 @@ type panelConfig struct {
 	M []string `toml:"middle"`
 }
 
-type profileConfig struct {
+type Config struct {
 	Panels   panelProfile   `toml:"panels"`
 	Monitors monitorProfile `toml:"monitors"`
+}
+
+func (p Config) IsZero() bool {
+	return p.Panels == nil && p.Monitors == nil
 }

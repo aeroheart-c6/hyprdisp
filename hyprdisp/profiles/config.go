@@ -21,7 +21,7 @@ const (
 )
 
 // Detect will check if the appropriate configuration file for the active monitors already exists
-func (s defaultService) Detect(ctx context.Context, monitors []hyprland.Monitor) bool {
+func (s defaultService) Detect(ctx context.Context, monitors []hyprland.Monitor) (Config, error) {
 	var (
 		profileID   string = getProfileID(monitors)
 		profilePath string
@@ -30,18 +30,27 @@ func (s defaultService) Detect(ctx context.Context, monitors []hyprland.Monitor)
 
 	profilePath, err = s.getProfilePath(profileID)
 	if err != nil {
-		return false
+		return Config{}, err
 	}
 
 	_, err = os.Stat(profilePath)
-	return err == nil
+	if err != nil {
+		return Config{}, err
+	}
+
+	return s.loadProfile(ctx, profileID)
 }
 
 // Init will create a set of config files with default values based on `hyprctl monitors` output
-func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monitor) error {
-	var logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monitor) (Config, error) {
+	var (
+		logger   *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		monitors monitorProfile
+		config   Config
+		err      error
+	)
 
-	var monitors monitorProfile = make(monitorProfile, len(hyprMonitors))
+	monitors = make(monitorProfile, len(hyprMonitors))
 	for _, monitor := range hyprMonitors {
 		logger.Printf("Found monitor (enabled: %v): %+v", monitor.Enabled, monitor)
 
@@ -62,7 +71,7 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 		}
 	}
 
-	var profile profileConfig = profileConfig{
+	config = Config{
 		Panels: panelProfile{
 			keyDefaultPanelMain: panelConfig{
 				L: []string{
@@ -91,10 +100,31 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 		Monitors: monitors,
 	}
 
-	return s.saveProfile(ctx, getProfileID(hyprMonitors), profile)
+	err = s.saveProfile(ctx, getProfileID(hyprMonitors), config)
+	if err != nil {
+		return Config{}, err
+	}
+
+	return config, nil
 }
 
-func (s defaultService) saveProfile(ctx context.Context, id string, profile profileConfig) error {
+func (s defaultService) Apply(ctx context.Context, cfg Config) error {
+	var err error
+
+	err = s.applyMonitors(ctx)
+	if err != nil {
+		return nil // TODO should probably try to roll back???
+	}
+
+	err = s.applyPanels(ctx)
+	if err != nil {
+		return nil
+	}
+
+	return nil
+}
+
+func (s defaultService) saveProfile(ctx context.Context, id string, profile Config) error {
 	var (
 		logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 		body   []byte
@@ -120,8 +150,7 @@ func (s defaultService) saveProfile(ctx context.Context, id string, profile prof
 		return err
 	}
 
-	logger.Printf("Resulting TOML file...")
-	logger.Printf("%+v", string(body))
+	logger.Printf("Saving TOML data to file: %+v", string(body))
 
 	_, err = file.Write(body)
 	if err != nil {
@@ -131,8 +160,9 @@ func (s defaultService) saveProfile(ctx context.Context, id string, profile prof
 	return nil
 }
 
-func (s defaultService) loadProfile(ctx context.Context, id string) (monitorProfile, error) {
+func (s defaultService) loadProfile(ctx context.Context, id string) (Config, error) {
 	var (
+		logger   *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
 		filePath string
 		data     []byte
 		err      error
@@ -140,21 +170,23 @@ func (s defaultService) loadProfile(ctx context.Context, id string) (monitorProf
 
 	filePath, err = s.getProfilePath(id)
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
 
 	data, err = os.ReadFile(filePath)
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
 
-	var displays monitorProfile
-	err = toml.Unmarshal(data, &displays)
+	var profile Config
+	err = toml.Unmarshal(data, &profile)
 	if err != nil {
-		return nil, err
+		return Config{}, err
 	}
 
-	return displays, nil
+	logger.Printf("Loaded profile from TOML: %+v", profile)
+
+	return profile, nil
 }
 
 func (s defaultService) getProfilePath(id string) (string, error) {
