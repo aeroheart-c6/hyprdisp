@@ -1,11 +1,14 @@
 package hyprpanel
 
-import "context"
+import (
+	"context"
+)
 
 const (
 	cfgKeyLayouts string = "bar.layouts"
 	cfgIndent     string = "    "
 	cfgDirectory  string = "hyprpanel"
+	cfgFile       string = "config.json"
 )
 
 type Service interface {
@@ -18,5 +21,8 @@ type defaultService struct {
 }
 
 func NewDefaultService() Service {
-	return defaultService{}
+	return defaultService{
+		cfgPath: "./var",
+		cfgFile: cfgFile,
+	}
 }

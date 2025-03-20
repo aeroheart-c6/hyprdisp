@@ -111,14 +111,14 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 func (s defaultService) Apply(ctx context.Context, cfg Config) error {
 	var err error
 
+	err = s.applyPanels(ctx, cfg.Panels)
+	if err != nil {
+		return nil
+	}
+
 	err = s.applyMonitors(ctx)
 	if err != nil {
 		return nil // TODO should probably try to roll back???
-	}
-
-	err = s.applyPanels(ctx)
-	if err != nil {
-		return nil
 	}
 
 	return nil

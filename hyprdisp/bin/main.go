@@ -75,10 +75,8 @@ func exec(ctx context.Context) error {
 		return err
 	}
 
-	profileCfg, err = profilesSrv.Detect(ctx, monitors)
-	if err != nil {
-		return err
-	}
+	logger.Printf("Detecting current configuration")
+	profileCfg, _ = profilesSrv.Detect(ctx, monitors)
 
 	if profileCfg.IsZero() {
 		logger.Printf("Configuration for monitors not found. Creating...")

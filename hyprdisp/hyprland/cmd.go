@@ -116,7 +116,6 @@ func parseMonitorsPayload(body string) ([]Monitor, error) {
 					field string
 					value string
 					found bool
-					err   error
 				)
 
 				field, value, found = strings.Cut(line, ":")
@@ -124,10 +123,7 @@ func parseMonitorsPayload(body string) ([]Monitor, error) {
 					return nil, errors.New("uanble to parse a field / value pair")
 				}
 
-				err = monitor.set(field, strings.TrimSpace(value))
-				if err != nil {
-					fmt.Printf("whoops: %v\n", err)
-				}
+				monitor.set(field, strings.TrimSpace(value))
 			}
 		}
 

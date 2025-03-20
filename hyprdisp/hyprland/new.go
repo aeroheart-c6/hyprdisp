@@ -2,7 +2,6 @@ package hyprland
 
 import (
 	"context"
-	"path"
 )
 
 const (
@@ -25,7 +24,7 @@ type defaultService struct {
 
 func NewDefaultService() Service {
 	return defaultService{
-		cfgPath:       path.Join(".", "var"),
+		cfgPath:       "./var",
 		cfgMonitors:   cfgMonitorsFile,
 		cfgWorkspaces: cfgWorkspacesFile,
 	}
