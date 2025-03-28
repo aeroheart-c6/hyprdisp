@@ -15,11 +15,6 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-const (
-	keyDefaultPanelMain string = "main"
-	keyDefaultPanelSub  string = "sub"
-)
-
 // Detect will check if the appropriate configuration file for the active monitors already exists
 func (s defaultService) Detect(ctx context.Context, monitors []hyprland.Monitor) (Config, error) {
 	var (
@@ -115,7 +110,7 @@ func (s defaultService) Apply(ctx context.Context, cfg Config) error {
 		err    error
 	)
 
-	err = s.applyPanels(ctx, cfg.Panels)
+	err = s.applyPanels(ctx, cfg)
 	if err != nil {
 		logger.Printf("Unable to apply panel configuration: %v", err)
 	}
