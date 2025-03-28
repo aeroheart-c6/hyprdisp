@@ -8,6 +8,7 @@ type monitorConfig struct {
 	Resolution string            `toml:"resolution"`
 	Frequency  string            `toml:"frequency"`
 	Scale      string            `toml:"scale"`
+	Position   string            `toml:"position"`
 	Workspaces []workspaceConfig `toml:"workspaces"`
 }
 

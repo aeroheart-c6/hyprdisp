@@ -57,6 +57,7 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 		monitors[monitor.Name] = monitorConfig{
 			ID:         monitor.ID,
 			Main:       monitor.ID == "0",
+			Position:   "auto",
 			Scale:      "auto",
 			Resolution: "preferred",
 			Frequency:  "",
@@ -109,16 +110,19 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 }
 
 func (s defaultService) Apply(ctx context.Context, cfg Config) error {
-	var err error
+	var (
+		logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		err    error
+	)
 
 	err = s.applyPanels(ctx, cfg.Panels)
 	if err != nil {
-		return nil
+		logger.Printf("Unable to apply panel configuration: %v", err)
 	}
 
-	err = s.applyMonitors(ctx)
+	err = s.applyMonitors(ctx, cfg.Monitors)
 	if err != nil {
-		return nil // TODO should probably try to roll back???
+		return err // TODO should probably try to roll back???
 	}
 
 	return nil
