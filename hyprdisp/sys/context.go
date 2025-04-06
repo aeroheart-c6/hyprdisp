@@ -3,5 +3,6 @@ package sys
 type ContextKey string
 
 const (
-	ContextKeyLogger ContextKey = "hyprdisp.logger"
+	ContextKeyLogger     ContextKey = "hyprdisp.logger"
+	ContextKeyCLIActions ContextKey = "hyprdisp.actionRegistry"
 )

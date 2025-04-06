@@ -20,9 +20,9 @@ type defaultService struct {
 	cfgFile string
 }
 
-func NewDefaultService() Service {
+func NewDefaultService(cfgPath string) Service {
 	return defaultService{
-		cfgPath: "./var",
+		cfgPath: cfgPath,
 		cfgFile: cfgFile,
 	}
 }
