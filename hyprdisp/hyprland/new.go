@@ -6,8 +6,8 @@ import (
 
 const (
 	cfgDirectory      string = "hypr"
-	cfgMonitorsFile   string = "hypr-monitors.conf"
-	cfgWorkspacesFile string = "hypr-workspaces.conf"
+	cfgMonitorsFile   string = "hyprland-monitors.conf"
+	cfgWorkspacesFile string = "hyprland-workspaces.conf"
 )
 
 type Service interface {

@@ -29,15 +29,16 @@ type defaultService struct {
 }
 
 func NewDefaultService(
-	hyprlandService hyprland.Service,
-	hyprpanelService hyprpanel.Service,
+	hyprlandSrv hyprland.Service,
+	hyprpanelSrv hyprpanel.Service,
+	cfgPath string,
 ) Service {
 	var c defaultService = defaultService{
-		hyprland:  hyprlandService,
-		hyprpanel: hyprpanelService,
+		hyprland:  hyprlandSrv,
+		hyprpanel: hyprpanelSrv,
 		timer:     time.NewTimer(0),
 		state:     "",
-		cfgPath:   "./var",
+		cfgPath:   cfgPath,
 	}
 
 	return c

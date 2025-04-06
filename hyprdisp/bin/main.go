@@ -70,9 +70,9 @@ func setupActions(ctx context.Context) context.Context {
 	logger, _ = sys.GetLogger(ctx)
 
 	var (
-		hyprlandSrv  hyprland.Service  = hyprland.NewDefaultService("./var")
-		hyprpanelSrv hyprpanel.Service = hyprpanel.NewDefaultService("./var")
-		profilesSrv  profiles.Service  = profiles.NewDefaultService(hyprlandSrv, hyprpanelSrv)
+		hyprlandSrv  hyprland.Service  = hyprland.NewDefaultService("")
+		hyprpanelSrv hyprpanel.Service = hyprpanel.NewDefaultService("")
+		profilesSrv  profiles.Service  = profiles.NewDefaultService(hyprlandSrv, hyprpanelSrv, "./var")
 	)
 
 	logger.Info("Configuring Actions")

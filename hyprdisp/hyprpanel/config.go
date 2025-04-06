@@ -3,6 +3,7 @@ package hyprpanel
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"os"
 
@@ -54,7 +55,9 @@ func loadConfig(cfgPath string) (map[string]any, error) {
 	)
 
 	data, err = os.ReadFile(cfgPath)
-	if err != nil {
+	if errors.Is(err, os.ErrNotExist) {
+		return map[string]any{}, nil
+	} else if err != nil {
 		return nil, err
 	}
 
