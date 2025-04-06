@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path"
 
@@ -39,15 +39,24 @@ func (s defaultService) Detect(ctx context.Context, monitors []hyprland.Monitor)
 // Init will create a set of config files with default values based on `hyprctl monitors` output
 func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monitor) (Config, error) {
 	var (
-		logger   *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		logger *slog.Logger
+		err    error
+	)
+	logger, err = sys.GetLogger(ctx)
+	if err != nil {
+		return Config{}, err
+	}
+
+	var (
 		monitors monitorProfile
 		config   Config
-		err      error
 	)
-
 	monitors = make(monitorProfile, len(hyprMonitors))
 	for _, monitor := range hyprMonitors {
-		logger.Printf("Found monitor (enabled: %v): %+v", monitor.Enabled, monitor)
+		logger.Info("Found monitor",
+			slog.Any("monitor", monitor),
+			slog.Bool("enabled", monitor.Enabled),
+		)
 
 		monitors[monitor.Name] = monitorConfig{
 			ID:         monitor.ID,
@@ -106,13 +115,17 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 
 func (s defaultService) Apply(ctx context.Context, cfg Config) error {
 	var (
-		logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		logger *slog.Logger
 		err    error
 	)
+	logger, err = sys.GetLogger(ctx)
+	if err != nil {
+		return err
+	}
 
 	err = s.applyPanels(ctx, cfg)
 	if err != nil {
-		logger.Printf("Unable to apply panel configuration: %v", err)
+		logger.Info("Unable to apply panel configuration", slog.Any("error", err))
 	}
 
 	err = s.applyMonitors(ctx, cfg.Monitors)
@@ -125,11 +138,15 @@ func (s defaultService) Apply(ctx context.Context, cfg Config) error {
 
 func (s defaultService) saveProfile(ctx context.Context, id string, profile Config) error {
 	var (
-		logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
-		body   []byte
+		logger *slog.Logger
 		err    error
 	)
+	logger, err = sys.GetLogger(ctx)
+	if err != nil {
+		return err
+	}
 
+	var body []byte
 	body, err = toml.Marshal(profile)
 	if err != nil {
 		return err
@@ -149,7 +166,7 @@ func (s defaultService) saveProfile(ctx context.Context, id string, profile Conf
 		return err
 	}
 
-	logger.Printf("Saving TOML data to file: %+v", string(body))
+	logger.Info("Saving TOML data to file", slog.String("file", string(body)))
 
 	_, err = file.Write(body)
 	if err != nil {
@@ -161,11 +178,15 @@ func (s defaultService) saveProfile(ctx context.Context, id string, profile Conf
 
 func (s defaultService) loadProfile(ctx context.Context, id string) (Config, error) {
 	var (
-		logger   *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		logger   *slog.Logger
 		filePath string
 		data     []byte
 		err      error
 	)
+	logger, err = sys.GetLogger(ctx)
+	if err != nil {
+		return Config{}, err
+	}
 
 	filePath, err = s.getProfilePath(id)
 	if err != nil {
@@ -183,7 +204,7 @@ func (s defaultService) loadProfile(ctx context.Context, id string) (Config, err
 		return Config{}, err
 	}
 
-	logger.Printf("Loaded profile from TOML: %+v", profile)
+	logger.Info("Loaded profile from TOML", slog.Any("profile", profile))
 
 	return profile, nil
 }

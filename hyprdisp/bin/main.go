@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 
 	"aeroheart.io/hyprdisp/hyprland"
 	"aeroheart.io/hyprdisp/hyprpanel"
@@ -33,15 +33,15 @@ func main() {
 	var (
 		ctx    context.Context
 		err    error
-		logger *log.Logger
+		logger *slog.Logger
 	)
 
 	ctx = setup()
 
 	err = exec(ctx)
 	if err != nil {
-		logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
-		logger.Printf("encountered an error: %v", err)
+		logger, _ = sys.GetLogger(ctx)
+		logger.Info("encountered an error: %v", err)
 	}
 }
 
@@ -54,9 +54,9 @@ func setup() context.Context {
 }
 
 func setupLogger(ctx context.Context) context.Context {
-	var logger *log.Logger = log.Default()
+	var logger *slog.Logger = slog.Default()
 
-	return context.WithValue(ctx, sys.ContextKeyLogger, logger)
+	return sys.SetLogger(ctx, logger)
 }
 
 func exec(ctx context.Context) error {
