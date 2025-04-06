@@ -3,7 +3,7 @@ package hyprpanel
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"os"
 
 	"aeroheart.io/hyprdisp/sys"
@@ -14,18 +14,22 @@ func (s defaultService) Apply(
 	layout BarLayout,
 ) error {
 	var (
-		logger  *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		logger  *slog.Logger
 		cfgPath string
 		cfg     map[string]any
 		err     error
 	)
+	logger, err = sys.GetLogger(ctx)
+	if err != nil {
+		return err
+	}
 
 	cfgPath, err = s.getConfigFilePath()
 	if err != nil {
 		return err
 	}
 
-	logger.Printf("Loading configuration file at: %s", cfgPath)
+	logger.Info("Loading configuration file", slog.String("path", cfgPath))
 	cfg, err = loadConfig(cfgPath)
 	if err != nil {
 		return err
@@ -34,7 +38,7 @@ func (s defaultService) Apply(
 	// add BarLayout instance into the map
 	cfg[cfgKeyLayouts] = layout
 
-	logger.Printf("Writing configuration file at: %s", cfgPath)
+	logger.Info("Writing configuration file", slog.String("path", cfgPath))
 	err = writeConfig(cfgPath, cfg)
 	if err != nil {
 		return err

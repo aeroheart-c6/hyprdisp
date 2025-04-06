@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 
@@ -44,7 +45,7 @@ func main() {
 	err = exec(ctx)
 	if err != nil {
 		logger, _ = sys.GetLogger(ctx)
-		logger.Info("encountered an error: %v", err)
+		logger.Info(fmt.Sprintf("encountered an error: %v", err))
 	}
 }
 

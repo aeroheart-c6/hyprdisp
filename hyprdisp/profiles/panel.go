@@ -2,7 +2,7 @@ package profiles
 
 import (
 	"context"
-	"log"
+	"log/slog"
 
 	"aeroheart.io/hyprdisp/hyprpanel"
 	"aeroheart.io/hyprdisp/sys"
@@ -15,17 +15,21 @@ const (
 
 func (s defaultService) applyPanels(ctx context.Context, config Config) error {
 	var (
-		logger *log.Logger = ctx.Value(sys.ContextKeyLogger).(*log.Logger)
+		logger *slog.Logger
 		layout hyprpanel.BarLayout
 		err    error
 	)
+	logger, err = sys.GetLogger(ctx)
+	if err != nil {
+		return err
+	}
+
 	layout, err = assignMonitorPanels(config)
 	if err != nil {
 		return err
 	}
 
-	logger.Printf("%+v", layout)
-
+	logger.Info("Applying Hyprpanel configuration", slog.Any("layout", layout))
 	return s.hyprpanel.Apply(ctx, layout)
 }
 
