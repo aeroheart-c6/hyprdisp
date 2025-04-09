@@ -48,10 +48,10 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 	}
 
 	var (
-		monitors monitorConfig
+		monitors monitorConfig = make(monitorConfig, len(hyprMonitors))
+		devices  []deviceSpec  = make([]deviceSpec, 0, len(hyprMonitors))
 		config   Config
 	)
-	monitors = make(monitorConfig, len(hyprMonitors))
 	for _, monitor := range hyprMonitors {
 		logger.Info("Found monitor",
 			slog.Any("monitor", monitor),
@@ -74,9 +74,18 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 				},
 			},
 		}
+
+		devices = append(devices, deviceSpec{
+			ID:          monitor.ID,
+			Name:        monitor.Name,
+			Description: monitor.Description,
+			Serial:      monitor.Serial,
+		})
 	}
 
 	config = Config{
+		Devices:  devices,
+		Monitors: monitors,
 		Panels: panelProfile{
 			keyDefaultPanelMain: panelSpec{
 				L: []string{
@@ -102,7 +111,6 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 				R: []string{},
 			},
 		},
-		Monitors: monitors,
 	}
 
 	err = s.saveProfile(ctx, getProfileID(hyprMonitors), config)

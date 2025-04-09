@@ -27,7 +27,15 @@ type panelSpec struct {
 	M []string `toml:"middle"`
 }
 
+type deviceSpec struct {
+	ID          string `toml:"id"`
+	Name        string `toml:"name"`
+	Description string `toml:"description"`
+	Serial      string `toml:"serial"`
+}
+
 type Config struct {
+	Devices  []deviceSpec  `toml:"devices"`
 	Panels   panelProfile  `toml:"panels"`
 	Monitors monitorConfig `toml:"monitors"`
 }
