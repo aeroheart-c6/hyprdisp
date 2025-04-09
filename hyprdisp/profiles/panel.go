@@ -36,19 +36,19 @@ func (s defaultService) applyPanels(ctx context.Context, config Config) error {
 func assignMonitorPanels(config Config) (hyprpanel.BarLayout, error) {
 	var layout hyprpanel.BarLayout = make(hyprpanel.BarLayout, len(config.Monitors))
 
-	for name, monitorConfig := range config.Monitors {
-		var panelConfig panelSpec
+	for _, monitor := range config.Monitors {
+		var spec panelSpec
 
-		if monitorConfig.Main {
-			panelConfig = config.Panels[keyDefaultPanelMain]
+		if monitor.Main {
+			spec = config.Panels[keyDefaultPanelMain]
 		} else {
-			panelConfig = config.Panels[keyDefaultPanelSub]
+			spec = config.Panels[keyDefaultPanelSub]
 		}
 
-		layout[name] = hyprpanel.BarWidgetConfig{
-			L: panelConfig.L,
-			R: panelConfig.R,
-			M: panelConfig.M,
+		layout[monitor.ID] = hyprpanel.BarWidgetConfig{
+			L: spec.L,
+			R: spec.R,
+			M: spec.M,
 		}
 	}
 

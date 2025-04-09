@@ -42,7 +42,7 @@ func (action DetectAction) Execute(ctx context.Context) error {
 	config, err = action.Profiles.Detect(ctx, monitors)
 	switch err.(type) {
 	case *fs.PathError:
-		logger.Debug("Path error received from profile detection: %v", err)
+		logger.Debug("Path error received from profile detection", slog.Any("error", err))
 	default:
 		return err
 

@@ -76,7 +76,7 @@ func writeConfig(cfgPath string, cfg map[string]any) error {
 		data []byte
 		err  error
 	)
-	file, err = os.OpenFile(cfgPath, os.O_CREATE|os.O_WRONLY, 0644)
+	file, err = os.OpenFile(cfgPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}

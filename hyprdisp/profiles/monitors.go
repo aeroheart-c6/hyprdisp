@@ -7,29 +7,29 @@ import (
 	"aeroheart.io/hyprdisp/hyprland"
 )
 
-func (s defaultService) applyMonitors(ctx context.Context, profile monitorConfig) error {
+func (s defaultService) applyMonitors(ctx context.Context, config monitorConfig) error {
 	var (
-		monitors   []hyprland.Monitor          = make([]hyprland.Monitor, 0, len(profile))
+		monitors   []hyprland.Monitor          = make([]hyprland.Monitor, 0, len(config))
 		workspaces []hyprland.MonitorWorkspace = make([]hyprland.MonitorWorkspace, 0)
 	)
 
-	for name, config := range profile {
+	for name, spec := range config {
 		var resolution string
 
-		if config.Resolution != "preferred" && config.Frequency != "" {
-			resolution = fmt.Sprintf("%s@%s", config.Resolution, config.Frequency)
+		if spec.Resolution != "preferred" && spec.Frequency != "" {
+			resolution = fmt.Sprintf("%s@%s", spec.Resolution, spec.Frequency)
 		} else {
-			resolution = config.Resolution
+			resolution = spec.Resolution
 		}
 
 		monitors = append(monitors, hyprland.Monitor{
 			Name:       name,
 			Resolution: resolution,
-			Position:   config.Position,
-			Scale:      config.Scale,
+			Position:   spec.Position,
+			Scale:      spec.Scale,
 		})
 
-		for _, workspaceProfile := range config.Workspaces {
+		for _, workspaceProfile := range spec.Workspaces {
 			workspaces = append(workspaces, hyprland.MonitorWorkspace{
 				Monitor:    name,
 				ID:         workspaceProfile.ID,
