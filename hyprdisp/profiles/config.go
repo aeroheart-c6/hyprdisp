@@ -48,24 +48,24 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 	}
 
 	var (
-		monitors monitorProfile
+		monitors monitorConfig
 		config   Config
 	)
-	monitors = make(monitorProfile, len(hyprMonitors))
+	monitors = make(monitorConfig, len(hyprMonitors))
 	for _, monitor := range hyprMonitors {
 		logger.Info("Found monitor",
 			slog.Any("monitor", monitor),
 			slog.Bool("enabled", monitor.Enabled),
 		)
 
-		monitors[monitor.Name] = monitorConfig{
+		monitors[monitor.Name] = monitorSpec{
 			ID:         monitor.ID,
 			Main:       monitor.ID == "0",
 			Position:   "auto",
 			Scale:      "auto",
 			Resolution: "preferred",
 			Frequency:  "",
-			Workspaces: []workspaceConfig{
+			Workspaces: []workspaceSpec{
 				{
 					ID:         fmt.Sprintf("%s001", monitor.ID),
 					Default:    true,
@@ -78,7 +78,7 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 
 	config = Config{
 		Panels: panelProfile{
-			keyDefaultPanelMain: panelConfig{
+			keyDefaultPanelMain: panelSpec{
 				L: []string{
 					"workspaces",
 					"windowtitle",
@@ -93,7 +93,7 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 					"dashboard",
 				},
 			},
-			keyDefaultPanelSub: panelConfig{
+			keyDefaultPanelSub: panelSpec{
 				L: []string{
 					"workspaces",
 					"windowtitle",

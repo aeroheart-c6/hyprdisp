@@ -7,7 +7,7 @@ import (
 	"aeroheart.io/hyprdisp/hyprland"
 )
 
-func (s defaultService) applyMonitors(ctx context.Context, profile monitorProfile) error {
+func (s defaultService) applyMonitors(ctx context.Context, profile monitorConfig) error {
 	var (
 		monitors   []hyprland.Monitor          = make([]hyprland.Monitor, 0, len(profile))
 		workspaces []hyprland.MonitorWorkspace = make([]hyprland.MonitorWorkspace, 0)

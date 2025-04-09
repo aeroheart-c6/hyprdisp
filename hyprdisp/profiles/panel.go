@@ -37,7 +37,7 @@ func assignMonitorPanels(config Config) (hyprpanel.BarLayout, error) {
 	var layout hyprpanel.BarLayout = make(hyprpanel.BarLayout, len(config.Monitors))
 
 	for name, monitorConfig := range config.Monitors {
-		var panelConfig panelConfig
+		var panelConfig panelSpec
 
 		if monitorConfig.Main {
 			panelConfig = config.Panels[keyDefaultPanelMain]
