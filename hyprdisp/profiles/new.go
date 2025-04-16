@@ -16,7 +16,12 @@ type Service interface {
 	Detect(context.Context, []hyprland.Monitor) (Config, error)
 	Init(context.Context, []hyprland.Monitor) (Config, error)
 	Apply(context.Context, Config) error
-	ListenEvents(context.Context, chan error, chan hyprland.Event)
+
+	AsListener() ListenerService
+}
+
+type ListenerService interface {
+	ListenHyprland(context.Context, chan hyprland.Event, chan error)
 	ListenTimer(context.Context, chan error)
 }
 
@@ -28,18 +33,22 @@ type defaultService struct {
 	state     state
 }
 
+func (s defaultService) AsListener() ListenerService {
+	return &s
+}
+
 func NewDefaultService(
 	hyprlandSrv hyprland.Service,
 	hyprpanelSrv hyprpanel.Service,
 	cfgPath string,
 ) Service {
-	var c defaultService = defaultService{
+	var service defaultService = defaultService{
 		hyprland:  hyprlandSrv,
 		hyprpanel: hyprpanelSrv,
-		timer:     time.NewTimer(0),
-		state:     "",
+		timer:     nil,
+		state:     WatchState,
 		cfgPath:   cfgPath,
 	}
 
-	return c
+	return service
 }

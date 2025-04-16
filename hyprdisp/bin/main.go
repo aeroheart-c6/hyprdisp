@@ -85,6 +85,10 @@ func setupActions(ctx context.Context) context.Context {
 		HyprLand: hyprlandSrv,
 		Profiles: profilesSrv,
 	})
+	registry.Add(&cli.ListenAction{
+		Hyprland: hyprlandSrv,
+		Profiles: profilesSrv.AsListener(),
+	})
 
 	return context.WithValue(ctx, sys.ContextKeyCLIActions, registry)
 }
