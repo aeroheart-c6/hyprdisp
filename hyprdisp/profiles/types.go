@@ -5,6 +5,7 @@ type monitorConfig map[string]monitorSpec
 type monitorSpec struct {
 	ID         string          `toml:"id"`
 	Main       bool            `toml:"main"`
+	Enabled    bool            `toml:"enabled"`
 	Resolution string          `toml:"resolution"`
 	Frequency  string          `toml:"frequency"`
 	Scale      string          `toml:"scale"`

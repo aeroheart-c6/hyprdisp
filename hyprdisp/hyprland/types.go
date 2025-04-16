@@ -81,12 +81,22 @@ func (m *Monitor) set(field string, value string) error {
 }
 
 func (m Monitor) marshal() string {
-	return fmt.Sprintf("monitor = %s, %s, %s, %s",
-		m.Name,
-		m.Resolution,
-		m.Position,
-		m.Scale,
-	)
+	var conf string
+
+	if m.Enabled {
+		conf = fmt.Sprintf("monitor = %s, %s, %s, %s",
+			m.Name,
+			m.Resolution,
+			m.Position,
+			m.Scale,
+		)
+	} else {
+		conf = fmt.Sprintf("monitor = %s, disable",
+			m.Name,
+		)
+	}
+
+	return conf
 }
 
 func (m Monitor) String() string {

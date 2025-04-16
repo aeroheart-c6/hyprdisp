@@ -27,6 +27,7 @@ func (s defaultService) applyMonitors(ctx context.Context, config monitorConfig)
 			Resolution: resolution,
 			Position:   spec.Position,
 			Scale:      spec.Scale,
+			Enabled:    spec.Enabled,
 		})
 
 		for _, workspaceProfile := range spec.Workspaces {

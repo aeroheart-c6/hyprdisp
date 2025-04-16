@@ -61,6 +61,7 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 		monitors[monitor.Name] = monitorSpec{
 			ID:         monitor.ID,
 			Main:       monitor.ID == "0",
+			Enabled:    true,
 			Position:   "auto",
 			Scale:      "auto",
 			Resolution: "preferred",
