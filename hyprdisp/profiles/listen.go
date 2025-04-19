@@ -57,9 +57,9 @@ func (s *defaultService) ListenHyprland(ctx context.Context, events chan hyprlan
 			slog.Bool("relevant", relevant),
 		)
 
-		// if s.state == WatchState {
-		// 	s.timer.Reset(triggerDuration)
-		// }
+		if s.state == WatchState {
+			s.timer.Reset(triggerDuration)
+		}
 	}
 }
 
