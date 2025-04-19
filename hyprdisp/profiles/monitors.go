@@ -9,9 +9,17 @@ import (
 
 func (s defaultService) applyMonitors(ctx context.Context, config monitorConfig) error {
 	var (
-		monitors   []hyprland.Monitor          = make([]hyprland.Monitor, 0, len(config))
+		monitors   []hyprland.Monitor          = make([]hyprland.Monitor, 0, len(config)+1)
 		workspaces []hyprland.MonitorWorkspace = make([]hyprland.MonitorWorkspace, 0)
 	)
+
+	monitors = append(monitors, hyprland.Monitor{
+		Name:       "",
+		Resolution: "preferred",
+		Position:   "auto",
+		Scale:      "auto",
+		Enabled:    true,
+	})
 
 	for name, spec := range config {
 		var resolution string

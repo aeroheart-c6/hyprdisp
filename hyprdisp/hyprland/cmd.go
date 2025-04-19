@@ -29,7 +29,7 @@ func (s defaultService) GetMonitors() ([]Monitor, error) {
 		socketConn.Close()
 	}()
 
-	socketConn.Write([]byte("monitors"))
+	socketConn.Write([]byte("monitors all"))
 
 	var (
 		bufferSize int    = 512
