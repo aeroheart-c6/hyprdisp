@@ -38,7 +38,7 @@ func (s defaultService) Apply(ctx context.Context, cfg Config) error {
 	return nil
 }
 
-func (s defaultService) applyMonitors(ctx context.Context, config monitorConfig) error {
+func (s defaultService) applyMonitors(ctx context.Context, config MonitorMap) error {
 	var (
 		logger *slog.Logger
 		err    error

@@ -13,9 +13,10 @@ const (
 )
 
 type Service interface {
-	Detect(context.Context, []hyprland.Monitor) (Config, error)
-	Init(context.Context, []hyprland.Monitor) (Config, error)
+	Detect(context.Context, MonitorMap) (Config, error)
+	Init(context.Context, MonitorMap) (Config, error)
 	Apply(context.Context, Config) error
+	ConnectedMonitors(context.Context) (MonitorMap, error)
 
 	AsListener() ListenerService
 }

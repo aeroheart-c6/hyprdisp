@@ -99,14 +99,6 @@ func (m Monitor) marshal() string {
 	return conf
 }
 
-func (m Monitor) String() string {
-	return fmt.Sprintf("[%s %s %s]",
-		m.ID,
-		m.Name,
-		m.Description,
-	)
-}
-
 func (m Monitor) IsZero() bool {
 	return m.Name == ""
 }

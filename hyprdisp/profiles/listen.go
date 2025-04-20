@@ -95,18 +95,21 @@ func (s *defaultService) ListenTimer(ctx context.Context, errs chan error) {
 
 func (s *defaultService) triggerConfigUpdates(ctx context.Context) error {
 	var (
-		logger   *slog.Logger
-		monitors []hyprland.Monitor
-		config   Config
-		err      error
+		logger *slog.Logger
+		err    error
 	)
 	logger, err = sys.GetLogger(ctx)
 	if err != nil {
 		return err
 	}
 
+	var (
+		config   Config
+		monitors MonitorMap
+	)
+
 	logger.Info("profile: querying monitors...")
-	monitors, err = s.hyprland.GetMonitors()
+	monitors, err = s.ConnectedMonitors(ctx)
 	if err != nil {
 		return err
 	}

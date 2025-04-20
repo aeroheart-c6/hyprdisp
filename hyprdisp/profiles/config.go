@@ -2,13 +2,9 @@ package profiles
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"os"
-	"path"
-
-	"crypto/sha3"
 
 	"aeroheart.io/hyprdisp/hyprland"
 	"aeroheart.io/hyprdisp/sys"
@@ -16,37 +12,7 @@ import (
 )
 
 // Detect will check if the appropriate configuration file for the active monitors already exists
-func (s defaultService) Detect(ctx context.Context, monitors []hyprland.Monitor) (Config, error) {
-	var (
-		logger      *slog.Logger
-		profileID   string = getProfileID(monitors)
-		profilePath string
-		err         error
-	)
-	logger, err = sys.GetLogger(ctx)
-	if err != nil {
-		return Config{}, err
-	}
-
-	profilePath, err = s.getProfilePath(profileID)
-	if err != nil {
-		return Config{}, err
-	}
-
-	logger.Info("Checking if configuration profile exists",
-		slog.String("id", profileID),
-		slog.String("path", profilePath),
-	)
-	_, err = os.Stat(profilePath)
-	if err != nil {
-		return Config{}, err
-	}
-
-	return s.loadProfile(ctx, profileID)
-}
-
-// Init will create a set of config files with default values based on `hyprctl monitors` output
-func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monitor) (Config, error) {
+func (s defaultService) Detect(ctx context.Context, monitors MonitorMap) (Config, error) {
 	var (
 		logger *slog.Logger
 		err    error
@@ -57,46 +23,63 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 	}
 
 	var (
-		devices  []deviceSpec  = make([]deviceSpec, 0, len(hyprMonitors))
-		monitors monitorConfig = make(monitorConfig, len(hyprMonitors))
-		config   Config
+		id   string
+		path string
 	)
-	for _, monitor := range hyprMonitors {
-		logger.Info("Found monitor",
-			slog.Any("monitor", monitor),
-			slog.Bool("enabled", monitor.Enabled),
-		)
+	if monitors == nil {
+		monitors, err = s.ConnectedMonitors(ctx)
+		if err != nil {
+			return Config{}, err
+		}
+	}
 
-		devices = append(devices, deviceSpec{
-			ID:          monitor.ID,
-			Name:        monitor.Name,
-			Description: monitor.Description,
-			Serial:      monitor.Serial,
-		})
+	id, err = getProfileID(monitors)
+	if err != nil {
+		return Config{}, err
+	}
 
-		monitors[monitor.Name] = monitorSpec{
-			ID:         monitor.ID,
-			Main:       monitor.ID == "0",
-			Enabled:    monitor.Enabled,
-			Position:   "auto",
-			Scale:      "auto",
-			Resolution: "preferred",
-			Frequency:  "",
-			Workspaces: []workspaceSpec{
-				{
-					ID:         fmt.Sprintf("%s001", monitor.ID),
-					Default:    true,
-					Persistent: true,
-					Decorate:   true,
-				},
-			},
+	path, err = s.getProfilePath(id)
+	if err != nil {
+		return Config{}, err
+	}
+
+	logger.Info("Checking if configuration profile exists",
+		slog.String("id", id),
+		slog.String("path", path),
+	)
+	_, err = os.Stat(path)
+	if err != nil {
+		return Config{}, err
+	}
+
+	return s.loadProfile(ctx, id)
+}
+
+// Init will create a set of config files with default values based on `hyprctl monitors` output
+func (s defaultService) Init(ctx context.Context, monitors MonitorMap) (Config, error) {
+	var (
+		logger *slog.Logger
+		err    error
+	)
+	logger, err = sys.GetLogger(ctx)
+	if err != nil {
+		return Config{}, err
+	}
+
+	var (
+		id     string
+		config Config
+	)
+	if monitors == nil {
+		monitors, err = s.ConnectedMonitors(ctx)
+		if err != nil {
+			return Config{}, err
 		}
 	}
 
 	config = Config{
-		Devices:  devices,
 		Monitors: monitors,
-		Panels: panelProfile{
+		Panels: PanelMap{
 			keyDefaultPanelMain: panelSpec{
 				L: []string{
 					"workspaces",
@@ -126,7 +109,13 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 		},
 	}
 
-	err = s.saveProfile(ctx, getProfileID(hyprMonitors), config)
+	id, err = getProfileID(monitors)
+	if err != nil {
+		return Config{}, err
+	}
+
+	logger.Info("Initializing profile", slog.String("id", id))
+	err = s.saveProfile(ctx, id, config)
 	if err != nil {
 		return Config{}, err
 	}
@@ -134,7 +123,8 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 	return config, nil
 }
 
-func (s defaultService) saveProfile(ctx context.Context, id string, profile Config) error {
+// savePRofile writes the Config struct into the configuration file
+func (s defaultService) saveProfile(ctx context.Context, id string, config Config) error {
 	var (
 		logger *slog.Logger
 		err    error
@@ -144,28 +134,30 @@ func (s defaultService) saveProfile(ctx context.Context, id string, profile Conf
 		return err
 	}
 
-	var body []byte
-	body, err = toml.Marshal(profile)
-	if err != nil {
-		return err
-	}
-
 	var (
-		filePath string
-		file     *os.File
+		data []byte
+		path string
+		file *os.File
 	)
-	filePath, err = s.getProfilePath(id)
+
+	path, err = s.getProfilePath(id)
 	if err != nil {
 		return err
 	}
 
-	file, err = os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0644)
+	file, err = os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
 
-	logger.Info("Saving TOML data to file", slog.String("file", string(body)))
-	_, err = file.Write(body)
+	data, err = config.ToTOML()
+	if err != nil {
+		return err
+	}
+
+	logger.Info("Saving TOML data to file", slog.String("file", path))
+	logger.Debug("TOML file data", slog.String("data", string(data)))
+	_, err = file.Write(data)
 	if err != nil {
 		return err
 	}
@@ -173,6 +165,7 @@ func (s defaultService) saveProfile(ctx context.Context, id string, profile Conf
 	return nil
 }
 
+// loadProfile reads the configuration file and unmarshals into the internal Config struct
 func (s defaultService) loadProfile(ctx context.Context, id string) (Config, error) {
 	var (
 		logger   *slog.Logger
@@ -205,26 +198,54 @@ func (s defaultService) loadProfile(ctx context.Context, id string) (Config, err
 	return profile, nil
 }
 
-func (s defaultService) getProfilePath(id string) (string, error) {
+func (s defaultService) ConnectedMonitors(ctx context.Context) (MonitorMap, error) {
 	var (
-		confPath string
-		err      error
+		logger *slog.Logger
+		err    error
+	)
+	logger, err = sys.GetLogger(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		monitors []hyprland.Monitor
+		mapping  MonitorMap
 	)
 
-	confPath, err = s.getConfigPath()
+	monitors, err = s.hyprland.GetMonitors()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return path.Join(confPath, fmt.Sprintf("%v.toml", id)), nil
-}
-
-func getProfileID(monitors []hyprland.Monitor) string {
-	var hash *sha3.SHA3 = sha3.New256()
-
+	mapping = make(MonitorMap, len(monitors))
 	for _, monitor := range monitors {
-		hash.Write([]byte(monitor.String()))
+		logger.Info("Found monitor",
+			slog.String("id", monitor.ID),
+			slog.String("name", monitor.Name),
+			slog.Bool("enabled", monitor.Enabled),
+		)
+
+		mapping[monitor.Name] = monitorSpec{
+			ID:          monitor.ID,
+			Main:        monitor.ID == "0",
+			Name:        monitor.Name,
+			Description: monitor.Description,
+			Enabled:     monitor.Enabled,
+			Position:    "auto",
+			Scale:       "auto",
+			Resolution:  "preferred",
+			Frequency:   "",
+			Workspaces: []workspaceSpec{
+				{
+					ID:         fmt.Sprintf("%s001", monitor.ID),
+					Default:    true,
+					Persistent: true,
+					Decorate:   true,
+				},
+			},
+		}
 	}
 
-	return hex.EncodeToString(hash.Sum(nil))[:10]
+	return mapping, nil
 }

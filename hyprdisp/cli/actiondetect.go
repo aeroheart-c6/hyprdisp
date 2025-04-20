@@ -30,10 +30,10 @@ func (action DetectAction) Execute(ctx context.Context) error {
 	}
 
 	var (
-		monitors []hyprland.Monitor
+		monitors profiles.MonitorMap
 		config   profiles.Config
 	)
-	monitors, err = action.HyprLand.GetMonitors()
+	monitors, err = action.Profiles.ConnectedMonitors(ctx)
 	if err != nil {
 		return err
 	}
