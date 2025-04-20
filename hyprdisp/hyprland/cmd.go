@@ -61,7 +61,7 @@ var (
 	regexMonitorRes *regexp.Regexp = regexp.MustCompile(`` +
 		`(?P<resolution>\d+x\d+@\d+\.\d+)` +
 		` at ` +
-		`(?P<position>\d+x\d+)`,
+		`(?P<position>-?\d+x-?\d+)`,
 	)
 )
 
@@ -120,7 +120,7 @@ func parseMonitorsPayload(body string) ([]Monitor, error) {
 
 				field, value, found = strings.Cut(line, ":")
 				if !found {
-					return nil, errors.New("uanble to parse a field / value pair")
+					return nil, errors.New("unable to parse a field / value pair")
 				}
 
 				monitor.set(field, strings.TrimSpace(value))

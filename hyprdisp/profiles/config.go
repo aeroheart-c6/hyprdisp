@@ -18,16 +18,25 @@ import (
 // Detect will check if the appropriate configuration file for the active monitors already exists
 func (s defaultService) Detect(ctx context.Context, monitors []hyprland.Monitor) (Config, error) {
 	var (
+		logger      *slog.Logger
 		profileID   string = getProfileID(monitors)
 		profilePath string
 		err         error
 	)
+	logger, err = sys.GetLogger(ctx)
+	if err != nil {
+		return Config{}, err
+	}
 
 	profilePath, err = s.getProfilePath(profileID)
 	if err != nil {
 		return Config{}, err
 	}
 
+	logger.Info("Checking if configuration profile exists",
+		slog.String("id", profileID),
+		slog.String("path", profilePath),
+	)
 	_, err = os.Stat(profilePath)
 	if err != nil {
 		return Config{}, err
@@ -48,8 +57,8 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 	}
 
 	var (
-		monitors monitorConfig = make(monitorConfig, len(hyprMonitors))
 		devices  []deviceSpec  = make([]deviceSpec, 0, len(hyprMonitors))
+		monitors monitorConfig = make(monitorConfig, len(hyprMonitors))
 		config   Config
 	)
 	for _, monitor := range hyprMonitors {
@@ -58,10 +67,17 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 			slog.Bool("enabled", monitor.Enabled),
 		)
 
+		devices = append(devices, deviceSpec{
+			ID:          monitor.ID,
+			Name:        monitor.Name,
+			Description: monitor.Description,
+			Serial:      monitor.Serial,
+		})
+
 		monitors[monitor.Name] = monitorSpec{
 			ID:         monitor.ID,
 			Main:       monitor.ID == "0",
-			Enabled:    true,
+			Enabled:    monitor.Enabled,
 			Position:   "auto",
 			Scale:      "auto",
 			Resolution: "preferred",
@@ -75,13 +91,6 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 				},
 			},
 		}
-
-		devices = append(devices, deviceSpec{
-			ID:          monitor.ID,
-			Name:        monitor.Name,
-			Description: monitor.Description,
-			Serial:      monitor.Serial,
-		})
 	}
 
 	config = Config{
@@ -93,7 +102,10 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 					"workspaces",
 					"windowtitle",
 				},
-				M: []string{},
+				M: []string{
+					"media",
+					"notifications",
+				},
 				R: []string{
 					"volume",
 					"network",
@@ -120,29 +132,6 @@ func (s defaultService) Init(ctx context.Context, hyprMonitors []hyprland.Monito
 	}
 
 	return config, nil
-}
-
-func (s defaultService) Apply(ctx context.Context, cfg Config) error {
-	var (
-		logger *slog.Logger
-		err    error
-	)
-	logger, err = sys.GetLogger(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = s.applyPanels(ctx, cfg)
-	if err != nil {
-		logger.Info("Unable to apply panel configuration", slog.Any("error", err))
-	}
-
-	err = s.applyMonitors(ctx, cfg.Monitors)
-	if err != nil {
-		return err // TODO should probably try to roll back???
-	}
-
-	return nil
 }
 
 func (s defaultService) saveProfile(ctx context.Context, id string, profile Config) error {
@@ -176,7 +165,6 @@ func (s defaultService) saveProfile(ctx context.Context, id string, profile Conf
 	}
 
 	logger.Info("Saving TOML data to file", slog.String("file", string(body)))
-
 	_, err = file.Write(body)
 	if err != nil {
 		return err
@@ -214,7 +202,6 @@ func (s defaultService) loadProfile(ctx context.Context, id string) (Config, err
 	}
 
 	logger.Info("Loaded profile from TOML", slog.Any("profile", profile))
-
 	return profile, nil
 }
 
