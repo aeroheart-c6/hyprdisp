@@ -1,13 +1,70 @@
 package profiles
 
 import (
+	"context"
 	"crypto/sha3"
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"os"
 	"path"
 	"sort"
+
+	"aeroheart.io/hyprdisp/hyprland"
+	"aeroheart.io/hyprdisp/sys"
 )
+
+func (s defaultService) ConnectedMonitors(ctx context.Context) (MonitorMap, error) {
+	var (
+		logger *slog.Logger
+		err    error
+	)
+	logger, err = sys.GetLogger(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		monitors []hyprland.Monitor
+		mapping  MonitorMap
+	)
+
+	monitors, err = s.hyprland.GetMonitors()
+	if err != nil {
+		return nil, err
+	}
+
+	mapping = make(MonitorMap, len(monitors))
+	for _, monitor := range monitors {
+		logger.Info("Found monitor",
+			slog.String("id", monitor.ID),
+			slog.String("name", monitor.Name),
+			slog.Bool("enabled", monitor.Enabled),
+		)
+
+		mapping[monitor.Name] = monitorSpec{
+			ID:          monitor.ID,
+			Main:        monitor.ID == "0",
+			Name:        monitor.Name,
+			Description: monitor.Description,
+			Enabled:     monitor.Enabled,
+			Position:    "auto",
+			Scale:       "auto",
+			Resolution:  "preferred",
+			Frequency:   "",
+			Workspaces: []workspaceSpec{
+				{
+					ID:         fmt.Sprintf("%s001", monitor.ID),
+					Default:    true,
+					Persistent: true,
+					Decorate:   true,
+				},
+			},
+		}
+	}
+
+	return mapping, nil
+}
 
 func (s defaultService) getConfigPath() (string, error) {
 	if s.cfgPath != "" {

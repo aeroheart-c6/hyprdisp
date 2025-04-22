@@ -80,6 +80,10 @@ func (s defaultService) applyMonitors(ctx context.Context, config MonitorMap) er
 			Enabled:    spec.Enabled,
 		})
 
+		if !spec.Enabled {
+			continue
+		}
+
 		for _, workspaceProfile := range spec.Workspaces {
 			workspaces = append(workspaces, hyprland.MonitorWorkspace{
 				Monitor:    name,

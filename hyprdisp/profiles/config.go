@@ -2,11 +2,9 @@ package profiles
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 
-	"aeroheart.io/hyprdisp/hyprland"
 	"aeroheart.io/hyprdisp/sys"
 	"github.com/pelletier/go-toml/v2"
 )
@@ -66,10 +64,7 @@ func (s defaultService) Init(ctx context.Context, monitors MonitorMap) (Config, 
 		return Config{}, err
 	}
 
-	var (
-		id     string
-		config Config
-	)
+	var config Config
 	if monitors == nil {
 		monitors, err = s.ConnectedMonitors(ctx)
 		if err != nil {
@@ -109,13 +104,13 @@ func (s defaultService) Init(ctx context.Context, monitors MonitorMap) (Config, 
 		},
 	}
 
-	id, err = getProfileID(monitors)
+	config.ID, err = getProfileID(config.Monitors)
 	if err != nil {
 		return Config{}, err
 	}
 
-	logger.Info("Initializing profile", slog.String("id", id))
-	err = s.saveProfile(ctx, id, config)
+	logger.Info("Initializing profile", slog.String("id", config.ID))
+	err = s.saveProfile(ctx, config)
 	if err != nil {
 		return Config{}, err
 	}
@@ -124,7 +119,7 @@ func (s defaultService) Init(ctx context.Context, monitors MonitorMap) (Config, 
 }
 
 // savePRofile writes the Config struct into the configuration file
-func (s defaultService) saveProfile(ctx context.Context, id string, config Config) error {
+func (s defaultService) saveProfile(ctx context.Context, config Config) error {
 	var (
 		logger *slog.Logger
 		err    error
@@ -140,7 +135,7 @@ func (s defaultService) saveProfile(ctx context.Context, id string, config Confi
 		file *os.File
 	)
 
-	path, err = s.getProfilePath(id)
+	path, err = s.getProfilePath(config.ID)
 	if err != nil {
 		return err
 	}
@@ -150,7 +145,7 @@ func (s defaultService) saveProfile(ctx context.Context, id string, config Confi
 		return err
 	}
 
-	data, err = config.ToTOML()
+	data, err = config.toTOML()
 	if err != nil {
 		return err
 	}
@@ -168,16 +163,19 @@ func (s defaultService) saveProfile(ctx context.Context, id string, config Confi
 // loadProfile reads the configuration file and unmarshals into the internal Config struct
 func (s defaultService) loadProfile(ctx context.Context, id string) (Config, error) {
 	var (
-		logger   *slog.Logger
-		filePath string
-		data     []byte
-		err      error
+		logger *slog.Logger
+		err    error
 	)
 	logger, err = sys.GetLogger(ctx)
 	if err != nil {
 		return Config{}, err
 	}
 
+	var (
+		filePath string
+		data     []byte
+		config   Config
+	)
 	filePath, err = s.getProfilePath(id)
 	if err != nil {
 		return Config{}, err
@@ -188,64 +186,13 @@ func (s defaultService) loadProfile(ctx context.Context, id string) (Config, err
 		return Config{}, err
 	}
 
-	var profile Config
-	err = toml.Unmarshal(data, &profile)
+	err = toml.Unmarshal(data, &config)
 	if err != nil {
 		return Config{}, err
 	}
+	config.ID = id
 
-	logger.Info("Loaded profile from TOML", slog.Any("profile", profile))
-	return profile, nil
-}
-
-func (s defaultService) ConnectedMonitors(ctx context.Context) (MonitorMap, error) {
-	var (
-		logger *slog.Logger
-		err    error
-	)
-	logger, err = sys.GetLogger(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var (
-		monitors []hyprland.Monitor
-		mapping  MonitorMap
-	)
-
-	monitors, err = s.hyprland.GetMonitors()
-	if err != nil {
-		return nil, err
-	}
-
-	mapping = make(MonitorMap, len(monitors))
-	for _, monitor := range monitors {
-		logger.Info("Found monitor",
-			slog.String("id", monitor.ID),
-			slog.String("name", monitor.Name),
-			slog.Bool("enabled", monitor.Enabled),
-		)
-
-		mapping[monitor.Name] = monitorSpec{
-			ID:          monitor.ID,
-			Main:        monitor.ID == "0",
-			Name:        monitor.Name,
-			Description: monitor.Description,
-			Enabled:     monitor.Enabled,
-			Position:    "auto",
-			Scale:       "auto",
-			Resolution:  "preferred",
-			Frequency:   "",
-			Workspaces: []workspaceSpec{
-				{
-					ID:         fmt.Sprintf("%s001", monitor.ID),
-					Default:    true,
-					Persistent: true,
-					Decorate:   true,
-				},
-			},
-		}
-	}
-
-	return mapping, nil
+	logger.Info("Loaded profile config from TOML", slog.String("id", config.ID))
+	logger.Debug("Config data", slog.Any("data", config))
+	return config, nil
 }

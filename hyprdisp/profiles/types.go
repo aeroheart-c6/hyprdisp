@@ -55,12 +55,17 @@ func (c Config) IsZero() bool {
 	return c.Panels == nil && c.Monitors == nil
 }
 
-func (c Config) ToTOML() ([]byte, error) {
+func (c Config) toTOML() ([]byte, error) {
 	var (
 		headers []string = make([]string, 0, len(c.Monitors))
 		body    []byte
 		err     error
 	)
+
+	body, err = toml.Marshal(c)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, device := range c.Monitors {
 		headers = append(
@@ -70,15 +75,8 @@ func (c Config) ToTOML() ([]byte, error) {
 	}
 	sort.Stable(sort.StringSlice(headers))
 
-	headers = append(
-		[]string{"# Quick summary of monitors in this configuration:"},
-		headers...,
-	)
-
-	body, err = toml.Marshal(c)
-	if err != nil {
-		return nil, err
-	}
+	headers = append([]string{"# Monitors in configuration:"}, headers...)
+	headers = append(headers, "\n")
 
 	return append(
 		[]byte(strings.Join(headers, "\n")),
