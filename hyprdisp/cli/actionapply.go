@@ -31,27 +31,20 @@ func (action ApplyAction) Execute(ctx context.Context) error {
 		return err
 	}
 
-	var (
-		monitors   profiles.MonitorMap
-		profileCfg profiles.Config
-	)
-	monitors, err = action.Profiles.ConnectedMonitors(ctx)
-	if err != nil {
-		return err
-	}
+	var config profiles.Config
 
 	logger.Info("Detecting current configuration")
-	profileCfg, err = action.Profiles.Detect(ctx, monitors)
+	config, err = action.Profiles.Detect(ctx, nil)
 	if err != nil {
 		return err
 	}
 
-	if profileCfg.IsZero() {
+	if config.IsZero() {
 		return errors.New("empty profile found")
 	}
 
-	logger.Info("Applying profile")
-	return action.Profiles.Apply(ctx, profileCfg)
+	logger.Info("Applying profile", slog.String("id", config.ID))
+	return action.Profiles.Apply(ctx, config)
 }
 
 func (action *ApplyAction) Configure(arguments []string) error {

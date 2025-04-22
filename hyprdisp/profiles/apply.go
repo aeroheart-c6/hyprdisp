@@ -2,8 +2,12 @@ package profiles
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
+	"os"
+	"path"
 
 	"aeroheart.io/hyprdisp/hyprland"
 	"aeroheart.io/hyprdisp/hyprpanel"
@@ -15,7 +19,7 @@ const (
 	keyDefaultPanelSub  string = "sub"
 )
 
-func (s defaultService) Apply(ctx context.Context, cfg Config) error {
+func (s defaultService) Apply(ctx context.Context, config Config) error {
 	var (
 		logger *slog.Logger
 		err    error
@@ -25,14 +29,52 @@ func (s defaultService) Apply(ctx context.Context, cfg Config) error {
 		return err
 	}
 
-	err = s.applyPanels(ctx, cfg)
+	var (
+		origPath string
+		confPath string
+	)
+
+	logger.Info("Applying profile: Panels", slog.String("id", config.ID))
+	err = s.applyPanels(ctx, config)
 	if err != nil {
 		logger.Info("Unable to apply panel configuration", slog.Any("error", err))
 	}
 
-	err = s.applyMonitors(ctx, cfg.Monitors)
+	logger.Info("Applying profile: Monitors and Workspaces", slog.String("id", config.ID))
+	err = s.applyMonitors(ctx, config.Monitors)
 	if err != nil {
 		return err // TODO should probably try to roll back???
+	}
+
+	logger.Info("Applying profile: Setting current profile", slog.String("id", config.ID))
+	confPath, err = s.getConfigPath()
+	if err != nil {
+		return err
+	}
+	confPath = path.Join(confPath, fmt.Sprintf("%s.current.toml", config.ID))
+	origPath = fmt.Sprintf("%s.toml", config.ID)
+
+	_, err = os.Lstat(confPath)
+	if err == nil {
+		err = os.Remove(confPath)
+		if err != nil {
+			return err
+		}
+	} else {
+		var (
+			pathErr *fs.PathError
+			ok      bool
+		)
+
+		pathErr, ok = err.(*fs.PathError)
+		if !ok || !errors.Is(pathErr.Err, os.ErrNotExist) {
+			return err
+		}
+	}
+
+	err = os.Symlink(origPath, confPath)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -62,7 +104,7 @@ func (s defaultService) applyMonitors(ctx context.Context, config MonitorMap) er
 		Enabled:    true,
 	})
 
-	logger.Info("Converting to hyprland monitor")
+	logger.Info("Converting to Hyprland monitor")
 	for name, spec := range config {
 		var resolution string
 
@@ -96,6 +138,8 @@ func (s defaultService) applyMonitors(ctx context.Context, config MonitorMap) er
 	}
 
 	logger.Info("Applying Hyprland configuration")
+	logger.Debug("Hyprland monitors data", slog.Any("data", monitors))
+	logger.Debug("Hyprland workspaces data", slog.Any("data", workspaces))
 	return s.hyprland.Apply(ctx, monitors, workspaces)
 }
 
@@ -110,12 +154,14 @@ func (s defaultService) applyPanels(ctx context.Context, config Config) error {
 		return err
 	}
 
+	logger.Info("Assigning panels to monitors")
 	layout, err = assignMonitorPanels(config)
 	if err != nil {
 		return err
 	}
 
-	logger.Info("Applying Hyprpanel configuration", slog.Any("layout", layout))
+	logger.Info("Applying Hyprpanel configuration")
+	logger.Debug("Hyprpanel layout data", slog.Any("data", layout))
 	return s.hyprpanel.Apply(ctx, layout)
 }
 
