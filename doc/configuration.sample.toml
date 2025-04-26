@@ -1,0 +1,37 @@
+# Monitors in configuration:
+#    * [0 DP-1 Samsung Electric Company LS24D60xU HNAXB00074]
+
+[panels]
+[panels.main]
+left = ['workspaces', 'windowtitle']
+right = ['volume', 'network', 'bluetooth', 'systray', 'clock', 'dashboard']
+middle = ['media', 'notifications']
+
+[panels.sub]
+left = ['workspaces', 'windowtitle']
+right = []
+middle = []
+
+[monitors]
+[monitors.DP-1]
+id = '0'
+main = true
+name = 'DP-1'
+description = 'Samsung Electric Company LS24D60xU HNAXB00074'
+enabled = true
+resolution = 'preferred'
+frequency = ''
+scale = 'auto'
+position = 'auto'
+
+[[monitors.DP-1.workspaces]]
+id = '0001'
+default = true
+persistent = true
+decorate = true
+
+[[monitors.DP-1.workspaces]]
+id = '0002'
+default = false
+persistent = true
+decorate = true
