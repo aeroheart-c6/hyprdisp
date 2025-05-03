@@ -18,6 +18,7 @@ type Service interface {
 	Apply(context.Context, Config) error
 	ConnectedMonitors(context.Context) (MonitorMap, error)
 
+	SetupDirectories() error
 	AsListener() ListenerService
 }
 

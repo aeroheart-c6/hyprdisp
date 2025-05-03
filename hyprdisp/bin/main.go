@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 
@@ -40,23 +39,35 @@ func main() {
 		logger *slog.Logger
 	)
 
-	ctx = setup()
+	ctx, err = setup()
+	if err != nil {
+		logger, _ = sys.GetLogger(ctx)
+		logger.Info("Setup encountered an error", slog.Any("error", err))
+		return
+	}
 
 	err = exec(ctx)
 	if err != nil {
 		logger, _ = sys.GetLogger(ctx)
-		logger.Info(fmt.Sprintf("encountered an error: %v", err))
+		logger.Info("Exec encountered an error", slog.Any("error", err))
 	}
 }
 
-func setup() context.Context {
-	var ctx context.Context
+func setup() (context.Context, error) {
+	var (
+		ctx context.Context
+		err error
+	)
 
 	ctx = context.Background()
 	ctx = setupLogger(ctx)
-	ctx = setupActions(ctx)
+	ctx, err = setupActions(ctx)
 
-	return ctx
+	if err != nil {
+		return ctx, err
+	}
+
+	return ctx, nil
 }
 
 func setupLogger(ctx context.Context) context.Context {
@@ -65,15 +76,21 @@ func setupLogger(ctx context.Context) context.Context {
 	return sys.SetLogger(ctx, logger)
 }
 
-func setupActions(ctx context.Context) context.Context {
+func setupActions(ctx context.Context) (context.Context, error) {
 	var logger *slog.Logger
 	logger, _ = sys.GetLogger(ctx)
 
 	var (
 		hyprlandSrv  hyprland.Service  = hyprland.NewDefaultService("")
 		hyprpanelSrv hyprpanel.Service = hyprpanel.NewDefaultService("")
-		profilesSrv  profiles.Service  = profiles.NewDefaultService(hyprlandSrv, hyprpanelSrv, "./var")
+		profilesSrv  profiles.Service  = profiles.NewDefaultService(hyprlandSrv, hyprpanelSrv, "")
+		err          error
 	)
+
+	err = profilesSrv.SetupDirectories()
+	if err != nil {
+		return ctx, err
+	}
 
 	logger.Info("Configuring Actions")
 	var registry cli.ActionRegistry = cli.ActionRegistry{}
@@ -90,7 +107,7 @@ func setupActions(ctx context.Context) context.Context {
 		Profiles: profilesSrv.AsListener(),
 	})
 
-	return context.WithValue(ctx, sys.ContextKeyCLIActions, registry)
+	return context.WithValue(ctx, sys.ContextKeyCLIActions, registry), nil
 }
 
 func exec(ctx context.Context) error {

@@ -66,6 +66,20 @@ func (s defaultService) ConnectedMonitors(ctx context.Context) (MonitorMap, erro
 	return mapping, nil
 }
 
+func (s defaultService) SetupDirectories() error {
+	var (
+		path string
+		err  error
+	)
+
+	path, err = s.getConfigPath()
+	if err != nil {
+		return err
+	}
+
+	return os.MkdirAll(path, 0o755)
+}
+
 func (s defaultService) getConfigPath() (string, error) {
 	if s.cfgPath != "" {
 		return s.cfgPath, nil
