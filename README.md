@@ -79,3 +79,14 @@ into another configuration file will make it undetectable to `hyprdisp` and will
 The program will write to the following files:
 
 * `$XDG_CONFIG_HOME/hyprpanel/config.json`
+
+
+# TODO
+
+1. workspace numbering -- defaults are not sane enough. just stick to 1,2,3
+
+2. "current" configuration should update. maybe just say `current.toml` too -- there can only be one current
+
+3. `hyprpanel` configuration can actually be initially empty. So code must account for this and add in the `bar.layouts` accordingly
+
+4. disabled monitors should hide the bar
